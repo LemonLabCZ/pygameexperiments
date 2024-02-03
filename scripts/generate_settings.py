@@ -2,7 +2,7 @@ import pandas as pd
 import random
 import numpy as np
 from enum import Enum
-set.seed(2024)
+random.seed(2024)
 df_stimuli = pd.read_excel("scripts/JuniorStarparameters.xlsx", sheet_name="StimList")
 df_stimuli.head()
 
@@ -91,7 +91,7 @@ df_stimuli = df_stimuli.set_index("trial")
 
 df_trials = df_trials.join(df_stimuli, rsuffix="_stim")
 
-df_trials["inter_trial"] = round((np.random.random(df_trials.shape[0])*200) + 900)
+df_trials["inter_trial"] = np.array([round(x) for x in (np.random.random(df_trials.shape[0])*200) + 900])
 
 df_trials.file_name.value_counts()
 df_trials.to_excel("junior_test_settings.xlsx")
