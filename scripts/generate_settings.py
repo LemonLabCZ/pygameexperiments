@@ -13,10 +13,12 @@ df_settings = pd.DataFrame(columns=["trial", "filename", "condition",
 class BlockType(Enum):
     Alternating = "Alternating"
     Homogenous = "Homogenous"
+
     
 class TrialType(Enum):
     Czech = "st"
     Ostrava = "nst"
+
 
 def opposing_type(trial_type):
     # validate trial type being class TrialType
@@ -25,12 +27,17 @@ def opposing_type(trial_type):
     if trial_type == TrialType.Ostrava:
         return TrialType.Czech
 
+
 def flatten(lst):
     flattened_list = [item for sublist in lst for item in sublist]
     return flattened_list
 
-# There will be a total of 12 sets, each with 4 blocks
-# The order of the blocks within each set is Homogenous, Alternating, Homogenous, Alternating
+# Sentences go either °1 to 6 or 6 to 1
+sentence_order_variants = ["ascending", "descending"]
+
+# There will be a total of 6 sets, each with 4 blocks
+# The order of the blocks always alternates between Homogenous and Alternating, some starting with Homogenous, others with alternating
+# The order blocks is constant throughout the entire experiment
 
 # sample 12 trial types so that each one appears 6 times
 # repeat each trial type 6 times and save to a list

@@ -18,23 +18,21 @@ import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
 import pygame
 from pygame.locals import *
-import random
-import numpy as np
 from datetime import datetime
 import pandas as pd
 import os
-import sys
-import time
 
 from src.experiment import stimulus, presentRating
 from src.calibrations import mouseCalibration, eyetrackerCalibration, calibrationOK
-from src.connections import find_cpod, sendTriggerCPOD, sendTrigger
 from src.utils import initScreen, getScreenSize
 # =======================================================================
 # initialize pygame and experimental window =============================
 
 # read in stimulus list
-SHOULD_TRIGGER = True
+SHOULD_TRIGGER = False
+if SHOULD_TRIGGER:
+    from src.connections import find_cpod, sendTriggerCPOD, sendTrigger
+
 INTER_TRIAL = 500
 RECALCULATE_INTER_TRIAL = True
 COMPORT = 'COM8'
@@ -61,8 +59,7 @@ pygame.mixer.init()
 
 start_time = datetime.now()
 last_datetime = start_time
-df_timings = pd.DataFrame(columns=['trial_start','sound_started','sound_duration',
-                                   'sound_ended', 'real_sound_duration',
+df_timings = pd.DataFrame(columns=['trial_start','sound_started','sound_duration', 'sound_ended', 'real_sound_duration',
                                    'sound_duration_difference','real_trial_duration','trigger_started', 'trigger_ended',
                                    'trigger_com_started', 'trigger_com_ended', 'trigger_cpod_started', 'trigger_cpod_ended'])
 
@@ -89,6 +86,9 @@ def play_trial(iTrial, df_stimuli, should_trigger, com, cpod, recalculate_inter_
         #sendTriggerCPOD(cpod, 5, 0.01)
         timings['trigger_cpod_ended'] = get_time_since_start(start_time)
         timings['trigger_ended'] = get_time_since_start(start_time)
+    else:
+        timings['trigger_started'] = get_time_since_start(start_time)
+        timings['trigger_ended'] = timings['trigger_started']
     if recalculate_inter_trial:
         ms_delay = round((timings['trigger_ended'] - timings['trigger_started'])*1000)
         pygame.time.delay(waittime_ms + inter_trial - ms_delay)
@@ -106,7 +106,7 @@ def play_trial(iTrial, df_stimuli, should_trigger, com, cpod, recalculate_inter_
 for iTrial in range(0, df_stimuli.shape[0]):
 #for iTrial in range(0, 4):
     timings = play_trial(iTrial, df_stimuli, SHOULD_TRIGGER, COMPORT, None, RECALCULATE_INTER_TRIAL)
-    df_timings = df_timings.append(timings, ignore_index = True)
+    df_timings = df_timings._append(timings, ignore_index = True)
 
 timestamp = start_time.strftime('%Y%m%d-%H%M%S')
 df_timings.to_csv(f'logs/{timestamp}_timings.csv', index=False, header=True)

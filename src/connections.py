@@ -11,7 +11,8 @@ def find_cpod():
         print("No XID-devices detected")
         return False, None
     return len(devices) > 0, devices
-    
+
+
 # send a trigger via CEDRUS cPOD to NIRx devices
 def sendTriggerCPOD(device, value, duration):
     # input variable:
@@ -53,7 +54,8 @@ def sendTrigger(decTriggerVal, com_port, duration = 0.01):
     thread.join(1.0)
     # Close the serial port
     port.close()
-    
+
+
 ## Eyetracker
 ## ==========================
 
