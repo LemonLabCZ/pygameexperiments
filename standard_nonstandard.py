@@ -12,11 +12,11 @@ institute of psychology, Czech Academy of Sciences
 hejtmanek@praha.psu.cas.cz
 """
 
-# import neccessary python libraries
 # =======================================================================
 # SETTINGS  NEED TO CHANGE FOR EACH PARTICIPANT
-# read in stimulus list
 PARTICIPANT_ID = 1 # ID of the participant as a number
+TRIGGERBOX_COM = 'COM4' # COM port of the trigger box, need to check it before the experiment 
+# using the triggerBox software. It generally stays at the same port, but it can change
 
 # =======================================================================
 # DEFAULT SETTINGS - DO NOT CHANGE UNLESS YOU KNOW WHAT YOU ARE DOING
@@ -27,6 +27,8 @@ RECALCULATE_INTER_TRIAL = True # True if you want to recalculate the intertrial 
 # that the total time of trial sound duration and intertrial is the same for all trials
 BLOCK_INTERTRIAL = (14, 20) # Intertrial interval in seconds for the pause between blocks
 RANDOM_SEED = 111 # Seed for the intertrials
+TRIGGER_DURATION = 0.1
+fNIRS_IMPLEMENTED = False # True if you want to send triggers to the fNIRS
 # IMPORTS =======================================================================
 
 import warnings
@@ -43,8 +45,8 @@ from src.calibrations import mouseCalibration, eyetrackerCalibration, calibratio
 from src.utils import initScreen, getScreenSize
 
 if SHOULD_TRIGGER:
-    from src.connections import find_cpod, sendTriggerCPOD, sendTrigger
-    COMPORT = 'COM8'
+    from src.connections import sendTrigger
+    COMPORT = TRIGGERBOX_COM
 else:
     COMPORT = None
 ## =======================================================================
@@ -87,22 +89,25 @@ pygame.mixer.init()
 # Experiment flow =======================================================
 start_time = datetime.now()
 last_datetime = start_time
-df_timings = pd.DataFrame(columns=['trial_start','sound_started','sound_duration', 'sound_ended', 'real_sound_duration',
+list_of_columns = ['trial_start','sound_started','sound_duration', 'sound_ended', 'real_sound_duration',
                                    'sound_duration_difference','real_trial_duration','trigger_started', 'trigger_ended',
-                                   'trigger_com_started', 'trigger_com_ended', 'trigger_cpod_started', 'trigger_cpod_ended'])
+                                   'trigger_com_started', 'trigger_com_ended']
+if fNIRS_IMPLEMENTED:
+    list_of_columns.extend(['trigger_cpod_started', 'trigger_cpod_ended'])
 
+df_timings = pd.DataFrame(columns=list_of_columns)
 def play_trial(iTrial, df_stimuli, should_trigger, com, recalculate_inter_trial = False):
     """_summary_
     Args:
-        iTrial (_type_): _description_
-        df_stimuli (_type_): _description_
-        should_trigger (_type_): _description_
-        com (_type_): _description_
-        cpod (_type_): _description_
-        recalculate_inter_trial (bool, optional): _description_. Defaults to False.
+        iTrial (int): Trial index, starting from 0
+        df_stimuli (pd.DataFrame): Dataframe with all the stimui
+        should_trigger (bool): If the triggers should be sent
+        com (string): COM port of the trigger box
+        recalculate_inter_trial (bool, optional): The trigger box generally adds 17 ms to the trigger duration. If this is set to true,
+            the intertrial time will be recalculated to match the total time of the trial and the intertrial time. Defaults to False.
 
     Returns:
-        _type_: _description_
+        list: returns list with timings of the trial
     """
     timings = dict()
     # This will change in case we need to repeat stimuli, now they just play once
@@ -121,18 +126,21 @@ def play_trial(iTrial, df_stimuli, should_trigger, com, recalculate_inter_trial 
     if should_trigger:
         timings['trigger_started'] = get_time_since_start(start_time)
         timings['trigger_com_started'] = get_time_since_start(start_time)
-        sendTrigger(5, com, 0.01)
+        sendTrigger(5, com, TRIGGER_DURATION)
         timings['trigger_com_ended'] = get_time_since_start(start_time)
-        timings['trigger_cpod_started'] = get_time_since_start(start_time)
-        #sendTriggerCPOD(cpod, 5, 0.01)
-        timings['trigger_cpod_ended'] = get_time_since_start(start_time)
+        if fNIRS_IMPLEMENTED:
+            timings['trigger_cpod_started'] = get_time_since_start(start_time)
+            # THE CPOD TRIGGER IS FROM fNIRS CPOD box, not implemented in this experiment
+            # sendTriggerCPOD(cpod, 5, 0.01)
+            timings['trigger_cpod_ended'] = get_time_since_start(start_time)
         timings['trigger_ended'] = get_time_since_start(start_time)
     else:
         timings['trigger_started'] = get_time_since_start(start_time)
         timings['trigger_ended'] = timings['trigger_started']
+    # Substracts the extraduration of the trigger from the intertrial time (generally 17 ms for the trigger box)
     if recalculate_inter_trial:
-        ms_delay = round((timings['trigger_ended'] - timings['trigger_started'])*1000)
-        pygame.time.delay(waittime_ms + inter_trial - ms_delay)
+        ms_trigger_delay = round((timings['trigger_ended'] - timings['trigger_started'])*1000)
+        pygame.time.delay(waittime_ms + inter_trial - ms_trigger_delay)
     else:
         pygame.time.delay(waittime_ms + inter_trial)
     
@@ -151,6 +159,6 @@ for iTrial in range(0, df_stimuli.shape[0]):
     df_timings = df_timings._append(timings, ignore_index = True)
 
 df_timings.to_csv(f'logs/standard_nonstandard/{PARTICIPANT_ID}_{timestamp}_timings.csv', 
-                  index=False, header=True, )
+                  index=False, header=True)
 pygame.display.quit()
 pygame.quit()
