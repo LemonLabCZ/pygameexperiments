@@ -32,7 +32,7 @@ def sendTriggerCPOD(device, value, duration):
     #device.clear_all_lines()    
 
 
-def sendTrigger(decTriggerVal, com_port, duration = 0.01):
+def sendTrigger(decTriggerVal, com_port, duration = 0.01, threadTimeout = 1):
     Connected = True
     hexTriggerVal = int(hex(decTriggerVal), 16)
     def ReadThread(port):
@@ -51,10 +51,9 @@ def sendTrigger(decTriggerVal, com_port, duration = 0.01):
     # Reset the port to its default state
     # Terminate the read thread
     Connected = False
-    thread.join(1.0)
+    thread.join(threadTimeout)
     # Close the serial port
     port.close()
-
 
 ## Eyetracker
 ## ==========================
