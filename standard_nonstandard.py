@@ -25,7 +25,8 @@ TRIGGERBOX_COM = 'COM4' # COM port of the trigger box, need to check it before t
 SHOULD_TRIGGER = False # True if you want to send triggers to the EEG
 RECALCULATE_INTER_TRIAL = True # True if you want to recalculate the intertrial time between each trial so 
 # that the total time of trial sound duration and intertrial is the same for all trials
-BLOCK_INTERTRIAL = (14, 20) # Intertrial interval in seconds for the pause between blocks
+SET_INTERTRIAL = (15000, 200000) # intertrial interval in miliseconds for the pause between sets
+INTERTRIAL_RANGE = 700 # If touple(2) then randomizes between the two values. If a single value, then keeps it at that value
 RANDOM_SEED = 111 # Seed for the intertrials
 TRIGGER_DURATION = 0.1
 fNIRS_IMPLEMENTED = False # True if you want to send triggers to the fNIRS
@@ -72,12 +73,20 @@ stimuli_filename = os.path.join(os.getcwd(), 'settings', 'standard_nonstandard',
                                 f'settings{PARTICIPANT_ID}.csv')
 df_stimuli = load_stimuli(stimuli_filename)
 # get number of unique values in the set columna nd the block column
+n_trials = len(df_stimuli['block_number'])
 n_set = len(df_stimuli['set_number'].unique())
 n_block = len(df_stimuli['block_number'].unique())
 n_blocks = n_set * n_block
 
 random.seed(RANDOM_SEED) # We want all 
-block_intertrials = random.choices(range(BLOCK_INTERTRIAL[0], BLOCK_INTERTRIAL[1]), k=n_blocks)
+# DRandomizes pauses betwwen sets
+set_intertrials = random.choices(range(SET_INTERTRIAL[0], SET_INTERTRIAL[1]), k=n_set)
+
+# Randomizes intertrial times or keeps it at a fixed value if the length is one
+if len(SET_INTERTRIAL) == 1:
+    intertirals = [SET_INTERTRIAL[0]] * n_trials
+if len(SET_INTERTRIAL) == 2:
+    intertrials = random.choices(range(SET_INTERTRIAL[0], SET_INTERTRIAL[1]), k=n_trials)
 
 # initialize pygame and experimental window =============================
 screenSize = getScreenSize()
@@ -90,8 +99,8 @@ pygame.mixer.init()
 start_time = datetime.now()
 last_datetime = start_time
 list_of_columns = ['trial_start','sound_started','sound_duration', 'sound_ended', 'real_sound_duration',
-                                   'sound_duration_difference','real_trial_duration','trigger_started', 'trigger_ended',
-                                   'trigger_com_started', 'trigger_com_ended']
+                    'sound_duration_difference','real_trial_duration','trigger_started', 'trigger_ended',
+                    'trigger_com_started', 'trigger_com_ended']
 if fNIRS_IMPLEMENTED:
     list_of_columns.extend(['trigger_cpod_started', 'trigger_cpod_ended'])
 
@@ -103,8 +112,9 @@ def play_trial(iTrial, df_stimuli, should_trigger, com, recalculate_inter_trial 
         df_stimuli (pd.DataFrame): Dataframe with all the stimui
         should_trigger (bool): If the triggers should be sent
         com (string): COM port of the trigger box
-        recalculate_inter_trial (bool, optional): The trigger box generally adds 17 ms to the trigger duration. If this is set to true,
-            the intertrial time will be recalculated to match the total time of the trial and the intertrial time. Defaults to False.
+        recalculate_inter_trial (bool, optional): The trigger box generally adds 17 ms to the trigger duration. 
+            If this is set to true, the intertrial time will be recalculated to match the total time of the
+            trial and the intertrial time. Defaults to False.
 
     Returns:
         list: returns list with timings of the trial
@@ -114,7 +124,7 @@ def play_trial(iTrial, df_stimuli, should_trigger, com, recalculate_inter_trial 
     print(f'{iTrial} started')
     iStimulus = iTrial
     # TODO - add the intertrial time to the timings
-    inter_trial = 1100
+    inter_trial = intertrials[iTrial]
     timings['trial_start'] = get_time_since_start(start_time)
     # say word and log onseg
     sound_path = path_to_stimulus(df_stimuli['stimulus'][iStimulus])
@@ -153,10 +163,18 @@ def play_trial(iTrial, df_stimuli, should_trigger, com, recalculate_inter_trial 
 
 # Experimental loop -----------------------
 timestamp = start_time.strftime('%Y%m%d-%H%M%S')
+last_set = 0
 
 for iTrial in range(0, df_stimuli.shape[0]):
+    trial_set = df_stimuli['set_number'][iTrial]
     timings = play_trial(iTrial, df_stimuli, SHOULD_TRIGGER, COMPORT, RECALCULATE_INTER_TRIAL)
     df_timings = df_timings._append(timings, ignore_index = True)
+    if(last_set != trial_set):
+        # pause between sets
+        print(f'Pause between sets started')
+        pygame.time.delay(set_intertrials[trial_set])
+        print(f'Pause between sets ended')
+    last_set = trial_set
 
 df_timings.to_csv(f'logs/standard_nonstandard/{PARTICIPANT_ID}_{timestamp}_timings.csv', 
                   index=False, header=True)
