@@ -1,4 +1,4 @@
-from ..src.standard_nonstandard import settings_generation as generator
+from ...src.standard_nonstandard import settings_generation as generator
 
 def test_generate_stimulus_filename():
     assert generator.generate_stimulus_filename(generator.TrialType.Czech, 1) == "st1.wav"

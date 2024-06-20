@@ -64,8 +64,17 @@ def create_set_trials(shift_number):
 
 
 def create_experiment_trials(settings_number):
+    """Generate dataframe with all trial settings
+
+    Args:
+        settings_number (_type_): _description_
+
+    Returns:
+        _type_: _description_
+    """
     df_trials = pd.DataFrame(columns=["trial", "condition", "block_number",
-                                      "block_type", "set_number", "stimulus_number", "stimulus"])
+                                      "block_type", "set_number", "stimulus_number",
+                                      "stimulus"])
     trial = 1
     # shifting number is 0 for 1 and 2, 1 for 3 and 4, 2 for 5 and 6 and so on
     shift_number = np.floor((settings_number - 1) / 2).astype(int)
