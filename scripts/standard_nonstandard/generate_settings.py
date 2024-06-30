@@ -3,8 +3,6 @@ import random
 from ...src.standard_nonstandard import settings_generation as generator
 
 random.seed(2024)
-df_stimuli = pd.read_excel("scripts/JuniorStarparameters.xlsx", sheet_name="StimList")
-df_stimuli.head()
 
 # There will be a total of 6 sets, each with 4 blocks
 # The order of the blocks always alternates between Homogenous and Alternating, 

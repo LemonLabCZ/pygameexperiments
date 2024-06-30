@@ -2,6 +2,7 @@ from enum import Enum
 from collections import deque
 import pandas as pd
 import numpy as np
+import os
 
 
 class BlockType(Enum):
@@ -94,9 +95,9 @@ def create_experiment_trials(settings_number):
                               'stimulus_number': sentence_variants[set_number - 1]})
         # stimulus is a f'{condition}_{stimulus_number}.wav' for each row
         df_set["stimulus"] = df_set.apply(lambda x: generate_stimulus_filename(x["condition"], x["stimulus_number"]), axis=1)
-
         df_trials = pd.concat([df_trials, df_set], axis=0)
         trial += len(conditions)
+
     df_trials = df_trials.set_index("trial", drop=False)
     # Not generating intertrials at this point
     # df_trials["inter_trial"] = np.array([round(x) for x in (np.random.random(df_trials.shape[0]) * 200) + 900])
