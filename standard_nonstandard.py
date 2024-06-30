@@ -155,17 +155,17 @@ def play_trial(iTrial, df_stimuli, should_trigger, com, recalculate_inter_trial 
 
 # Experimental loop -----------------------
 timestamp = start_time.strftime('%Y%m%d-%H%M%S')
-last_set = 0
 
+last_set = 0
 for iTrial in range(0, df_stimuli.shape[0]):
     trial_set = df_stimuli['set_number'][iTrial]
-    timings = flow.play_trial(iTrial, df_stimuli, intertirals, SHOULD_TRIGGER, COMPORT, RECALCULATE_INTER_TRIAL)
     df_timings = df_timings._append(timings, ignore_index = True)
     if(last_set != trial_set):
         # pause between sets
         print(f'Pause between sets started')
         pygame.time.delay(set_intertrials[trial_set])
         print(f'Pause between sets ended')
+    timings = play_trial(iTrial, df_stimuli, SHOULD_TRIGGER, COMPORT, RECALCULATE_INTER_TRIAL)
     last_set = trial_set
 
 df_timings.to_csv(f'logs/standard_nonstandard/{PARTICIPANT_ID}_{timestamp}_timings.csv', 
