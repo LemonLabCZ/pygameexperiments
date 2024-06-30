@@ -27,8 +27,8 @@ MOVIE_WINDOWS_NAME = 'Krtek.mp4 - Multimediální přehrávač VLC' # This is th
 SHOULD_TRIGGER = False # True if you want to send triggers to the EEG
 RECALCULATE_INTER_TRIAL = True # True if you want to recalculate the intertrial time between each trial so 
 # that the total time of trial sound duration and intertrial is the same for all trials
-BLOCK_INTERTRIAL = (15000, 200000) # intertrial interval in miliseconds for the pause between blocks
-INTERTRIAL_RANGE = (700) # If touple(2) then randomizes between the two values. If a single value, then keeps it at that value
+BLOCK_INTERTRIAL = (15000, 20000) # intertrial interval in miliseconds for the pause between blocks
+TRIAL_DURATION = 700 # Length of the trial
 RANDOM_SEED = 111 # Seed for the intertrials
 TRIGGER_DURATION = 0.1
 fNIRS_IMPLEMENTED = False # True if you want to send triggers to the fNIRS
@@ -86,16 +86,17 @@ def play_trial(iTrial, df_stimuli, should_trigger, com, recalculate_inter_trial 
     """
     timings = dict()
     # This will change in case we need to repeat stimuli, now they just play once
-    print(f'{iTrial} started')
-    iStimulus = iTrial
-    inter_trial = intertrials[iTrial]
+    trial_info = df_stimuli.iloc[iTrial]
     timings['trial_start'] = flow.get_time_since_start(start_time)
-    sound_path = path_to_stimulus(df_stimuli['stimulus'][iStimulus])
+    sound_path = path_to_stimulus(trial_info['stimulus'])
+    print(f'Trial {iTrial}: Type: {trial_info["trial_type"]}, --- stimulus: {trial_info["stimulus_type"]}')
     sound2play = pygame.mixer.Sound(sound_path)
     timings['sound_duration'] = sound2play.get_length()
     timings['sound_started'] = flow.get_time_since_start(start_time)
     sound2play.play(loops = 0)
-    waittime_ms = round(timings['sound_duration']*1000)
+    #waittime_ms = round(timings['sound_duration']*1000)
+    waittime_ms = TRIAL_DURATION
+
     if should_trigger:
         timings['trigger_started'] = flow.flow.get_time_since_start(start_time)
         timings['trigger_com_started'] = flow.get_time_since_start(start_time)
@@ -103,19 +104,18 @@ def play_trial(iTrial, df_stimuli, should_trigger, com, recalculate_inter_trial 
         timings['trigger_com_ended'] = flow.get_time_since_start(start_time)
         if fNIRS_IMPLEMENTED:
             timings['trigger_cpod_started'] = flow.get_time_since_start(start_time)
-            # THE CPOD TRIGGER IS FROM fNIRS CPOD box, not implemented in this experiment
             # sendTriggerCPOD(cpod, 5, 0.01)
             timings['trigger_cpod_ended'] = flow.get_time_since_start(start_time)
         timings['trigger_ended'] = flow.get_time_since_start(start_time)
     else:
         timings['trigger_started'] = flow.get_time_since_start(start_time)
         timings['trigger_ended'] = timings['trigger_started']
-    # Substracts the extraduration of the trigger from the intertrial time (generally 17 ms for the trigger box)
+    # Substracts the extra duration of the trigger from the intertrial time (generally 17 ms for the trigger box)
     if recalculate_inter_trial:
         ms_trigger_delay = round((timings['trigger_ended'] - timings['trigger_started'])*1000)
-        pygame.time.delay(waittime_ms + inter_trial - ms_trigger_delay)
+        pygame.time.delay(waittime_ms - ms_trigger_delay)
     else:
-        pygame.time.delay(waittime_ms + inter_trial)
+        pygame.time.delay(waittime_ms)
     
     sound2play.stop()
     timings['sound_ended'] = flow.get_time_since_start(start_time)
