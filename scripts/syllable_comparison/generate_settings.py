@@ -1,6 +1,4 @@
-import random
 from src.syllable_comparison import settings_generation as generator
-random.seed(2024)
 
 df_trials = generator.create_experiment_trials()
 df_trials.head()
