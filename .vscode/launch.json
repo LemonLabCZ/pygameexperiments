@@ -19,6 +19,14 @@
             "module": "pytest",
             "args": ["-s", "tests"],
             "console": "integratedTerminal"
+        },
+        {
+            "name": "Python: Pytest Active File",
+            "type": "python",
+            "request": "launch",
+            "module": "pytest",
+            "args": ["-s", "${file}"],
+            "console": "integratedTerminal"
         }
     ]
 }
