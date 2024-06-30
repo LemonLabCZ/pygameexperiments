@@ -17,6 +17,8 @@ hejtmanek@praha.psu.cas.cz
 PARTICIPANT_ID = 1 # ID of the participant as a number
 TRIGGERBOX_COM = 'COM4' # COM port of the trigger box, need to check it before the experiment 
 # using the triggerBox software. It generally stays at the same port, but it can change
+MOVIE_WINDOWS_NAME = 'Krtek.mp4 - Multimediální přehrávač VLC' # This is the name of the window
+# that the movie is played in. It can be found out by running the list_open_windows.py script in the root
 
 # =======================================================================
 # DEFAULT SETTINGS - DO NOT CHANGE UNLESS YOU KNOW WHAT YOU ARE DOING
@@ -30,6 +32,9 @@ INTERTRIAL_RANGE = (700) # If touple(2) then randomizes between the two values. 
 RANDOM_SEED = 111 # Seed for the intertrials
 TRIGGER_DURATION = 0.1
 fNIRS_IMPLEMENTED = False # True if you want to send triggers to the fNIRS
+MOVIE_REQUIRED = False # True if you want to play a movie during the experiment. Generally
+# set to false during debugging
+
 # IMPORTS =======================================================================
 
 import warnings
@@ -44,6 +49,7 @@ import os
 from src.utils import getScreenSize
 import src.core.experimental_flow as flow
 import src.syllable_comparison.experiment as experiment
+import src.core.video_control as VideoControl
 
 if SHOULD_TRIGGER:
     from src.connections import sendTrigger
@@ -59,34 +65,10 @@ def load_stimuli(file_name):
     print(f'# trial stimuli: {len(out)}')
     return out
 
+
 def path_to_stimulus(filename):
     return os.path.join(os.getcwd(), 'stimuli', 'syllable_comparison', filename)
 
-# Loading settings =======================================================
-stimuli_filename = generate_settings_filename(PARTICIPANT_ID)
-df_stimuli = load_stimuli(stimuli_filename)
-
-# get number of unique values in the set columna nd the block column
-n_trials = len(df_stimuli['block_number'])
-n_set = len(df_stimuli['set_number'].unique())
-n_block = len(df_stimuli['block_number'].unique())
-n_blocks = n_set * n_block
-
-block_intertrials = experiment.generate_block_intertrials(PARTICIPANT_ID, BLOCK_INTERTRIAL, n_blocks)
-intertrials = experiment.generate_intertrials(PARTICIPANT_ID, INTERTRIAL_RANGE, n_trials)
-
-# initialize pygame and experimental window =============================
-screenSize = getScreenSize()
-screen = pygame.display.set_mode(screenSize, pygame.HIDDEN)
-pygame.display.set_caption('')
-pygame.display.update()
-pygame.mixer.init()
-
-# Experiment flow =======================================================
-start_time = datetime.now()
-last_datetime = start_time
-
-df_timings = flow.prepare_log_table(add_fNIRS=fNIRS_IMPLEMENTED)
 
 def play_trial(iTrial, df_stimuli, should_trigger, com, recalculate_inter_trial = False):
     """_summary_
@@ -142,24 +124,56 @@ def play_trial(iTrial, df_stimuli, should_trigger, com, recalculate_inter_trial 
     timings['real_trial_duration'] = timings['sound_ended'] - timings['trial_start']
     return timings
 
-# Experimental loop -----------------------
+# Loading settings =======================================================
+stimuli_filename = generate_settings_filename(PARTICIPANT_ID)
+df_stimuli = load_stimuli(stimuli_filename)
+
+# get number of unique values in the set columna nd the block column
+n_trials = len(df_stimuli['block_number'])
+n_set = len(df_stimuli['set_number'].unique())
+n_block = len(df_stimuli['block_number'].unique())
+n_blocks = n_set * n_block
+
+## Setting initial parameters ========================================
+start_time = datetime.now()
+last_datetime = start_time
+
+block_intertrials = experiment.generate_block_intertrials(PARTICIPANT_ID, BLOCK_INTERTRIAL, n_blocks)
+
+df_timings = flow.prepare_log_table(add_fNIRS=fNIRS_IMPLEMENTED)
 timestamp = start_time.strftime('%Y%m%d-%H%M%S')
+
+# Experimental loop -----------------------
 log_location = os.path.join(os.getcwd(), 'logs', 'syllable_comparison')
 os.makedirs(log_location, exist_ok=True)
 log_filename = os.path.join(log_location, f'{PARTICIPANT_ID}_{timestamp}_timings.csv')
 
-last_block = 0
+# initialize pygame and experimental window =============================
+screenSize = getScreenSize()
+screen = pygame.display.set_mode(screenSize, pygame.HIDDEN)
+pygame.display.set_caption('')
+pygame.display.update()
+pygame.mixer.init()
+
+# Video Control =======================================================
+if MOVIE_REQUIRED:
+    VideoControl.start_playing_video(MOVIE_WINDOWS_NAME)
+
+# Main loop =======================================================
+last_block = 1 # used to check if the block has changed to initiate the pause between blocks
 for iTrial in range(0, df_stimuli.shape[0]):
     trial_set = df_stimuli['set_number'][iTrial]
+    this_block = df_stimuli['block_number'][iTrial]
+    block_order = (trial_set - 1) * 4 + this_block
+    if(last_block != this_block):
+        block_intertrial = int(block_intertrials[block_order - 1])
+        print(f'Pause between blocks started for {block_intertrial/1000}s')
+        pygame.time.delay(block_intertrial)
+        print(f'Pause ended')
+        df_timings.to_csv(log_filename, index=False, header=True, mode="w")
     timings = play_trial(iTrial, df_stimuli, SHOULD_TRIGGER, COMPORT, RECALCULATE_INTER_TRIAL)
     df_timings = df_timings._append(timings, ignore_index = True)
-    if(last_block != last_block):
-        # pause between sets
-        print(f'Pause between sets started')
-        pygame.time.delay(block_intertrials[trial_set])
-        print(f'Pause between sets ended')
-    df_timings.to_csv(log_filename, index=False, header=True, mode="w")
-    last_set = trial_set
+    last_block = this_block
 
 df_timings.to_csv(log_filename, index=False, header=True, mode="w")
 
