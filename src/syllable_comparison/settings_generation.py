@@ -125,8 +125,10 @@ def generate_stimulus_filename(trial_type, stimulus_type):
     """
     return f'{trial_type.value}_{stimulus_type.value}.wav'
     
+def settings_folder():
+    return os.path.join(os.getcwd(), 'settings', 'syllable_comparison')
+
 
 def generate_settings_filename(participant_id):
-    stimuli_filename = os.path.join(os.getcwd(), 'settings', 'syllable_comparison',
-                                    f'settings{participant_id}.csv')
+    stimuli_filename = os.path.join(settings_folder(), f'settings{participant_id}.csv')
     return stimuli_filename
