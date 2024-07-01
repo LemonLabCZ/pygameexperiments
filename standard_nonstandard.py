@@ -26,7 +26,7 @@ SHOULD_TRIGGER = False # True if you want to send triggers to the EEG
 RECALCULATE_INTER_TRIAL = True # True if you want to recalculate the intertrial time between each trial so 
 # that the total time of trial sound duration and intertrial is the same for all trials
 SET_INTERTRIAL = (15000, 200000) # intertrial interval in miliseconds for the pause between sets
-INTERTRIAL_RANGE = 700 # If touple(2) then randomizes between the two values. If a single value, then keeps it at that value
+INTERTRIAL_RANGE = [700] # If list(2) then randomizes between the two values. If a single value, then keeps it at that value
 RANDOM_SEED = 111 # Seed for the intertrials
 TRIGGER_DURATION = 0.1
 fNIRS_IMPLEMENTED = False # True if you want to send triggers to the fNIRS
@@ -63,41 +63,8 @@ def load_stimuli(file_name):
 def path_to_stimulus(filename):
     return os.path.join(os.getcwd(), 'stimuli', 'standard_nonstandard', filename)
 
-# Loading settings =======================================================
 
-stimuli_filename = os.path.join(os.getcwd(), 'settings', 'standard_nonstandard',
-                                f'settings{PARTICIPANT_ID}.csv')
-df_stimuli = load_stimuli(stimuli_filename)
-# get number of unique values in the set columna nd the block column
-n_trials = len(df_stimuli['block_number'])
-n_set = len(df_stimuli['set_number'].unique())
-n_block = len(df_stimuli['block_number'].unique())
-n_blocks = n_set * n_block
-
-random.seed(RANDOM_SEED) # We want all 
-# DRandomizes pauses betwwen sets
-set_intertrials = random.choices(range(SET_INTERTRIAL[0], SET_INTERTRIAL[1]), k=n_set)
-
-# Randomizes intertrial times or keeps it at a fixed value if the length is one
-if len(INTERTRIAL_RANGE) == 1:
-    intertirals = [INTERTRIAL_RANGE[0]] * n_trials
-if len(INTERTRIAL_RANGE) == 2:
-    intertrials = random.choices(range(INTERTRIAL_RANGE[0], INTERTRIAL_RANGE[1]), k=n_trials)
-
-# initialize pygame and experimental window =============================
-screenSize = getScreenSize()
-screen = pygame.display.set_mode(screenSize, pygame.HIDDEN)
-pygame.display.set_caption('')
-pygame.display.update()
-pygame.mixer.init()
-
-# Experiment flow =======================================================
-start_time = datetime.now()
-last_datetime = start_time
-
-df_timings = flow.prepare_log_table(add_fNIRS=fNIRS_IMPLEMENTED)
-
-def play_trial(iTrial, df_stimuli, should_trigger, com, recalculate_inter_trial = False):
+def play_trial(iTrial, df_stimuli, intertrials, should_trigger, com, recalculate_inter_trial = False):
     """_summary_
     Args:
         iTrial (int): Trial index, starting from 0
@@ -153,19 +120,53 @@ def play_trial(iTrial, df_stimuli, should_trigger, com, recalculate_inter_trial 
     timings['real_trial_duration'] = timings['sound_ended'] - timings['trial_start']
     return timings
 
+# Loading settings =======================================================
+stimuli_filename = os.path.join(os.getcwd(), 'settings', 'standard_nonstandard',
+                                f'settings{PARTICIPANT_ID}.csv')
+df_stimuli = load_stimuli(stimuli_filename)
+
+# get number of unique values in the set columna nd the block column
+n_trials = len(df_stimuli['block_number'])
+n_set = len(df_stimuli['set_number'].unique())
+n_block = len(df_stimuli['block_number'].unique())
+n_blocks = n_set * n_block
+
+random.seed(RANDOM_SEED) # We want all 
+# DRandomizes pauses betwwen sets
+
+set_intertrials = random.choices(range(SET_INTERTRIAL[0], SET_INTERTRIAL[1]), k=n_set)
+
+# Randomizes intertrial times or keeps it at a fixed value if the length is one
+if len(INTERTRIAL_RANGE) == 1:
+    intertrials = [INTERTRIAL_RANGE[0]] * n_trials
+if len(INTERTRIAL_RANGE) == 2:
+    intertrials = random.choices(range(INTERTRIAL_RANGE[0], INTERTRIAL_RANGE[1]), k=n_trials)
+
+# initialize pygame and experimental window =============================
+screenSize = getScreenSize()
+screen = pygame.display.set_mode(screenSize, pygame.HIDDEN)
+pygame.display.set_caption('')
+pygame.display.update()
+pygame.mixer.init()
+
+# Experiment flow =======================================================
+start_time = datetime.now()
+last_datetime = start_time
+
 # Experimental loop -----------------------
 timestamp = start_time.strftime('%Y%m%d-%H%M%S')
+df_timings = flow.prepare_log_table(add_fNIRS=fNIRS_IMPLEMENTED)
 
-last_set = 0
+last_set = 1
 for iTrial in range(0, df_stimuli.shape[0]):
     trial_set = df_stimuli['set_number'][iTrial]
-    df_timings = df_timings._append(timings, ignore_index = True)
     if(last_set != trial_set):
         # pause between sets
         print(f'Pause between sets started')
         pygame.time.delay(set_intertrials[trial_set])
         print(f'Pause between sets ended')
-    timings = play_trial(iTrial, df_stimuli, SHOULD_TRIGGER, COMPORT, RECALCULATE_INTER_TRIAL)
+    timings = play_trial(iTrial, df_stimuli, intertrials, SHOULD_TRIGGER, COMPORT, RECALCULATE_INTER_TRIAL)
+    df_timings = df_timings._append(timings, ignore_index = True)
     last_set = trial_set
 
 df_timings.to_csv(f'logs/standard_nonstandard/{PARTICIPANT_ID}_{timestamp}_timings.csv', 
