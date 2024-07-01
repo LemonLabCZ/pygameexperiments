@@ -25,7 +25,7 @@ TRIGGERBOX_COM = 'COM4' # COM port of the trigger box, need to check it before t
 SHOULD_TRIGGER = False # True if you want to send triggers to the EEG
 RECALCULATE_INTER_TRIAL = True # True if you want to recalculate the intertrial time between each trial so 
 # that the total time of trial sound duration and intertrial is the same for all trials
-SET_INTERTRIAL = (15000, 200000) # intertrial interval in miliseconds for the pause between sets
+BLOCK_INTERTRIAL = (15000, 20000) # intertrial interval in miliseconds for the pause between blocks
 INTERTRIAL_RANGE = [700] # If list(2) then randomizes between the two values. If a single value, then keeps it at that value
 RANDOM_SEED = 111 # Seed for the intertrials
 TRIGGER_DURATION = 0.1
@@ -132,10 +132,8 @@ n_set = len(df_stimuli['set_number'].unique())
 n_block = len(df_stimuli['block_number'].unique())
 n_blocks = n_set * n_block
 
-random.seed(RANDOM_SEED) # We want all 
-# DRandomizes pauses betwwen sets
-
-set_intertrials = random.choices(range(SET_INTERTRIAL[0], SET_INTERTRIAL[1]), k=n_set)
+random.seed(RANDOM_SEED) # We want all participants to have the same intertrials
+block_intertrials = random.choices(range(BLOCK_INTERTRIAL[0], BLOCK_INTERTRIAL[1]), k=n_blocks)
 
 # Randomizes intertrial times or keeps it at a fixed value if the length is one
 if len(INTERTRIAL_RANGE) == 1:
@@ -158,19 +156,22 @@ last_datetime = start_time
 timestamp = start_time.strftime('%Y%m%d-%H%M%S')
 df_timings = flow.prepare_log_table(add_fNIRS=fNIRS_IMPLEMENTED)
 
-last_set = 1
+last_setblock = df_stimuli['set_number'][0]+df_stimuli['block_number'][0]
+current_block = 0
 for iTrial in range(0, df_stimuli.shape[0]):
-    trial_set = df_stimuli['set_number'][iTrial]
-    if(last_set != trial_set):
-        # pause between sets
-        print(f'Pause between sets started')
-        pygame.time.delay(set_intertrials[trial_set])
-        print(f'Pause between sets ended')
+    setblock = df_stimuli['set_number'][iTrial]+df_stimuli['block_number'][iTrial]
+    if(last_setblock != setblock):
+        print(f'Pause between blocks started for {block_intertrials[current_block]/1000} seconds')
+        pygame.time.delay(block_intertrials[current_block])
+        print(f'Pause between blocks ended')
+        current_block += 1
+        df_timings.to_csv(f'logs/standard_nonstandard/{PARTICIPANT_ID}_{timestamp}_timings.csv', 
+                  index=False, header=True, mode='w')
     timings = play_trial(iTrial, df_stimuli, intertrials, SHOULD_TRIGGER, COMPORT, RECALCULATE_INTER_TRIAL)
     df_timings = df_timings._append(timings, ignore_index = True)
-    last_set = trial_set
+    last_setblock = setblock
 
 df_timings.to_csv(f'logs/standard_nonstandard/{PARTICIPANT_ID}_{timestamp}_timings.csv', 
-                  index=False, header=True)
+                  index=False, header=True, mode='w')
 pygame.display.quit()
 pygame.quit()
