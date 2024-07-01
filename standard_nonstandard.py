@@ -79,14 +79,15 @@ def play_trial(iTrial, df_stimuli, intertrials, should_trigger, com, recalculate
         list: returns list with timings of the trial
     """
     timings = dict()
-    # This will change in case we need to repeat stimuli, now they just play once
-    print(f'{iTrial} started')
-    iStimulus = iTrial
-    # TODO - add the intertrial time to the timings
     inter_trial = intertrials[iTrial]
     timings['trial_start'] = flow.get_time_since_start(start_time)
-    # say word and log onseg
-    sound_path = path_to_stimulus(df_stimuli['stimulus'][iStimulus])
+    
+    df_trial = df_stimuli.iloc[iTrial]
+    stim = df_trial['stimulus']
+    sound_path = path_to_stimulus(stim)
+    
+    print(f'{flow.get_time_since_start(start_time)}: Trial {iTrial}. {df_trial["block_type"]}. {df_trial["condition"]}. Stimulus {stim}')
+
     sound2play = pygame.mixer.Sound(sound_path)
     timings['sound_duration'] = sound2play.get_length()
     timings['sound_started'] = flow.get_time_since_start(start_time)
