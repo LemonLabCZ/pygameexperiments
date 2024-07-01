@@ -48,8 +48,8 @@ def test_create_set_trials():
 def test_create_experiment_trials():
     df_trials1 = generator.create_experiment_trials(1)
     df_trials2 = generator.create_experiment_trials(2)
-    assert df_trials1.shape[0] == 96
+    assert df_trials1.shape[0] == 16 * 7
     assert (df_trials1["condition"] == df_trials2["condition"]).all()
-    assert (df_trials1.tail(1)["stimulus_number"] == 6).all()
+    assert (df_trials1.tail(1)["stimulus_number"] == 7).all()
     assert (df_trials2.tail(1)["stimulus_number"] == 1).all()
 

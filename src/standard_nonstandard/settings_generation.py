@@ -3,6 +3,12 @@ from collections import deque
 import pandas as pd
 import numpy as np
 import os
+from dataclasses import dataclass
+
+@dataclass
+class Parameters:
+    n_stimuli_variants = 7
+    n_stimuli_per_block = 4
 
 
 class BlockType(Enum):
@@ -34,9 +40,9 @@ def create_block_trials(starting_trial_type, block_type, block_number):
         types = [starting_trial_type, opposing_type(starting_trial_type),
            starting_trial_type, opposing_type(starting_trial_type)] 
     if block_type == BlockType.Homogenous:
-        types = [starting_trial_type] * 4
-    block_types = [block_type] * 4
-    block_number = [block_number] * 4
+        types = [starting_trial_type] * Parameters.n_stimuli_per_block
+    block_types = [block_type] * Parameters.n_stimuli_per_block
+    block_number = [block_number] * Parameters.n_stimuli_per_block
     return types, block_types, block_number
     
 
@@ -81,11 +87,12 @@ def create_experiment_trials(settings_number):
     shift_number = np.floor((settings_number - 1) / 2).astype(int)
     # Even numbers have ascending order, odd numbers have descending order of sentences
     if settings_number % 2 == 1:
-        sentence_variants = [1,2,3,4,5,6]
+        sentence_variants = list(range(1, Parameters.n_stimuli_variants + 1))
     else:
-        sentence_variants = [6,5,4,3,2,1]
+        sentence_variants = list(range(1, Parameters.n_stimuli_variants + 1))
+        sentence_variants.reverse()
 
-    for set_number in range(1, 7):
+    for set_number in range(1, Parameters.n_stimuli_variants + 1):
         conditions, block_types, block_numbers = create_set_trials(shift_number)
         df_set = pd.DataFrame({'trial': range(trial, trial + len(conditions)),
                               'condition': conditions,
@@ -116,8 +123,8 @@ def create_experiment_inter_trials(rang, settings_number):
     """
     np.random.seed(1111)
     df_inter_trials = pd.DataFrame(columns=["block", "inter_trial"])
-    df_inter_trials["block"] = range(1, 6)
-    df_inter_trials["inter_trial"] = np.random.randint(rang[0], rang[1], size=5)
+    df_inter_trials["block"] = range(1, Parameters.n_stimuli_variants)
+    df_inter_trials["inter_trial"] = np.random.randint(rang[0], rang[1], size=Parameters.n_stimuli_variants - 1)
     return df_inter_trials
 
 
