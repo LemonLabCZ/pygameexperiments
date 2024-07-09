@@ -17,6 +17,8 @@ hejtmanek@praha.psu.cas.cz
 PARTICIPANT_ID = 1 # ID of the participant as a number
 TRIGGERBOX_COM = 'COM4' # COM port of the trigger box, need to check it before the experiment 
 # using the triggerBox software. It generally stays at the same port, but it can change
+MOVIE_WINDOWS_NAME = 'Krtek.mp4 - Multimediální přehrávač VLC' # This is the name of the window
+
 
 # =======================================================================
 # DEFAULT SETTINGS - DO NOT CHANGE UNLESS YOU KNOW WHAT YOU ARE DOING
@@ -30,6 +32,9 @@ INTERTRIAL_RANGE = [700] # If list(2) then randomizes between the two values. If
 RANDOM_SEED = 111 # Seed for the intertrials
 TRIGGER_DURATION = 0.1
 fNIRS_IMPLEMENTED = False # True if you want to send triggers to the fNIRS
+MOVIE_REQUIRED = False # True if you want to play a movie during the experiment. Generally
+# set to false during debugging
+
 # IMPORTS =======================================================================
 
 import warnings
@@ -147,6 +152,11 @@ screen = pygame.display.set_mode(screenSize, pygame.HIDDEN)
 pygame.display.set_caption('')
 pygame.display.update()
 pygame.mixer.init()
+
+# Video Control =======================================================
+if MOVIE_REQUIRED:
+    VideoControl.start_playing_video(MOVIE_WINDOWS_NAME)
+
 
 # Experiment flow =======================================================
 start_time = datetime.now()
