@@ -5,20 +5,24 @@ from src.syllable_comparison import settings_generation as generator
 def test_distribute_deviants():
     trial_sequence = [generator.StimulusType.standard] * 13 + [generator.StimulusType.deviant] * 7
     assert generator.max_consecutive_deviants(trial_sequence) == 7
-    trial_sequence = generator.distribute_deviants(trial_sequence, 999)
-    assert generator.max_consecutive_deviants(trial_sequence) <= 2
+    for i in range(50):
+        trial_sequence = generator.distribute_deviants(trial_sequence, 999)
+        assert generator.max_consecutive_deviants(trial_sequence) <= 2
 
 
 def test_create_block_trials():
-    trial_type = generator.TrialType.language_duration
-    trial_types, stimulus_types = generator.create_block_trials(trial_type, 999)
-    assert len(trial_types) == 25
-    assert len(stimulus_types) == 25
-    # assert all trial types are trial_type
-    assert all(trial == trial_type for trial in trial_types)
-    assert sum(stimulus == generator.StimulusType.deviant for stimulus in stimulus_types) == generator.N_DEVIANT_TRIALS
-    assert sum(stimulus == generator.StimulusType.standard for stimulus in stimulus_types) == generator.N_STANDARD_TRIALS + generator.N_STANDARD_TRIALS_START
-    assert all(stimulus == generator.StimulusType.standard for stimulus in stimulus_types[:5])
+    """This tests whether the block of trials is created correctly withe the correct number of deviants and standards.
+    """
+    for i in range(10):
+        trial_type = random.choice(list(generator.TrialType.__members__.values()))
+        trial_types, stimulus_types = generator.create_block_trials(trial_type, 999)
+        assert len(trial_types) == 25
+        assert len(stimulus_types) == 25
+        # assert all trial types are trial_type
+        assert all(trial == trial_type for trial in trial_types)
+        assert sum(stimulus == generator.StimulusType.deviant for stimulus in stimulus_types) == generator.N_DEVIANT_TRIALS
+        assert sum(stimulus == generator.StimulusType.standard for stimulus in stimulus_types) == generator.N_STANDARD_TRIALS + generator.N_STANDARD_TRIALS_START
+        assert all(stimulus == generator.StimulusType.standard for stimulus in stimulus_types[:5])
 
 
 def test_set_not_starting_with_previous():
@@ -33,13 +37,14 @@ def test_create_set_trials():
 
 
 def test_create_experiment_trials():
-    df_trials = generator.create_experiment_trials()
-    assert len(df_trials) == 500
-    assert all(df_trials["trial"].unique() == range(1, 501))
-    assert all(df_trials["block_number"].unique() == range(1, 5))
-    assert all(df_trials["set_number"].unique() == range(1, 6))
-    assert all(df_trials["stimulus_type"].unique() == [generator.StimulusType.standard, generator.StimulusType.deviant])
-    assert all(df_trials["stimulus"].apply(lambda x: x.endswith(".wav")))
+    for i in range(10):
+        df_trials = generator.create_experiment_trials(i)
+        assert len(df_trials) == 500
+        assert all(df_trials["trial"].unique() == range(1, 501))
+        assert all(df_trials["block_number"].unique() == range(1, 5))
+        assert all(df_trials["set_number"].unique() == range(1, 6))
+        assert all(df_trials["stimulus_type"].unique() == [generator.StimulusType.standard, generator.StimulusType.deviant])
+        assert all(df_trials["stimulus"].apply(lambda x: x.endswith(".wav")))
 
 
 def test_same_stimuli_order():
