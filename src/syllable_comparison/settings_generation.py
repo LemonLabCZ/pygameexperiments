@@ -50,6 +50,8 @@ def create_set_trials(set_number, cannot_start_with=None):
     set_block_numbers = []
     block_order = [TrialType.language_spectral, TrialType.language_duration,
                    TrialType.nonlanguage_spectral, TrialType.nonlanguage_duration]
+    # This should be a parameter in the function to make it reproducible
+    # Currently the seed is set hidden in the create_experiment_trials, so it should be fine, but just to be sure
     np.random.shuffle(block_order)
     if cannot_start_with is not None and cannot_start_with == block_order[0]:
         block_order.remove(cannot_start_with)
