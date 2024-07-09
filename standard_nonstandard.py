@@ -55,6 +55,10 @@ if SHOULD_TRIGGER:
     COMPORT = TRIGGERBOX_COM
 else:
     COMPORT = None
+
+
+if MOVIE_REQUIRED:
+    from src.connections import VideoControl
 ## =======================================================================
 # FUNCTIONS
 def load_stimuli(file_name):
@@ -63,6 +67,7 @@ def load_stimuli(file_name):
     out = pd.read_csv(pth)
     print(f'# trial stimuli: {len(out)}')
     return out
+
 
 def path_to_stimulus(filename):
     return os.path.join(os.getcwd(), 'stimuli', 'standard_nonstandard', filename)
@@ -155,7 +160,6 @@ pygame.mixer.init()
 # Video Control =======================================================
 if MOVIE_REQUIRED:
     VideoControl.start_playing_video(MOVIE_WINDOWS_NAME)
-
 
 # Experiment flow =======================================================
 start_time = datetime.now()
