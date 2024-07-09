@@ -1,5 +1,5 @@
-import pandas as pd
 import random
+import os
 from src.standard_nonstandard import settings_generation as generator
 from tests.standard_nonstandard.test_settings_generation import run_all_tests
 
@@ -10,8 +10,7 @@ random.seed(2024)
 # some starting with Homogenous, others with alternating
 # The order blocks is constant throughout the entire experiment
 
-run_all_tests()
-
+os.makedirs("settings/standard_nonstandard", exist_ok=True)
 for i in range(1, 100):
     df_trials = generator.create_experiment_trials(i)
     df_trials.to_csv(f"settings/standard_nonstandard/settings{i}.csv")

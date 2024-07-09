@@ -1,4 +1,6 @@
-from ...src.syllable_comparison import settings_generation as generator
+import random
+from src.syllable_comparison import settings_generation as generator
+
 
 def test_distribute_deviants():
     trial_sequence = [generator.StimulusType.standard] * 13 + [generator.StimulusType.deviant] * 7
