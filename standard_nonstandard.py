@@ -25,10 +25,9 @@ MOVIE_WINDOWS_NAME = 'Krtek.mp4 - Multimediální přehrávač VLC' # This is th
 # THESE SHOULD BE THE SAME THROUGHOUT THE ENTIRE EXPERIMENTAL RUN 
 # changed only between different experiments or for testing purposes
 SHOULD_TRIGGER = False # True if you want to send triggers to the EEG
-RECALCULATE_INTER_TRIAL = True # True if you want to recalculate the intertrial time between each trial so 
-# that the total time of trial sound duration and intertrial is the same for all trials
-BLOCK_INTERTRIAL = (15000, 20000) # intertrial interval in miliseconds for the pause between blocks
-INTERTRIAL_RANGE = [700] # If list(2) then randomizes between the two values. If a single value, then keeps it at that value
+RECALCULATE_INTER_TRIAL = True # True if you want to compensate for potential trigger delays caused by the serial communication
+BLOCK_INTERTRIAL = (15000, 20000) # intertrial interval in milliseconds for the pause between blocks
+INTERTRIAL_RANGE = [900, 1100] # If list(2) then randomizes between the two values. If a single value, then keeps it at that value
 RANDOM_SEED = 111 # Seed for the intertrials
 TRIGGER_DURATION = 0.1
 fNIRS_IMPLEMENTED = False # True if you want to send triggers to the fNIRS
