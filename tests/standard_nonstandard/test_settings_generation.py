@@ -1,4 +1,4 @@
-from ...src.standard_nonstandard import settings_generation as generator
+from src.standard_nonstandard import settings_generation as generator
 
 def test_generate_stimulus_filename():
     assert generator.generate_stimulus_filename(generator.TrialType.Czech, 1) == "st1.wav"
@@ -48,8 +48,15 @@ def test_create_set_trials():
 def test_create_experiment_trials():
     df_trials1 = generator.create_experiment_trials(1)
     df_trials2 = generator.create_experiment_trials(2)
-    assert df_trials1.shape[0] == 16 * 7
+    assert df_trials1.shape[0] == 16 * 4
     assert (df_trials1["condition"] == df_trials2["condition"]).all()
-    assert (df_trials1.tail(1)["stimulus_number"] == 7).all()
+    assert (df_trials1.tail(1)["stimulus_number"] == 4).all()
     assert (df_trials2.tail(1)["stimulus_number"] == 1).all()
-
+    
+def run_all_tests():
+    test_generate_stimulus_filename()
+    test_create_alternating_block_trials()
+    test_create_homogenous_block_trials()
+    test_create_set_trials()
+    test_create_set_trials()
+    test_create_experiment_trials()

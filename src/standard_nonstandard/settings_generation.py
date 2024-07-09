@@ -7,7 +7,7 @@ from dataclasses import dataclass
 
 @dataclass
 class Parameters:
-    n_stimuli_variants = 7
+    n_stimuli_variants = 4
     n_stimuli_per_block = 4
 
 

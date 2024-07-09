@@ -1,6 +1,7 @@
 import pandas as pd
 import random
 from src.standard_nonstandard import settings_generation as generator
+from tests.standard_nonstandard.test_settings_generation import run_all_tests
 
 random.seed(2024)
 
@@ -8,6 +9,8 @@ random.seed(2024)
 # The order of the blocks always alternates between Homogenous and Alternating, 
 # some starting with Homogenous, others with alternating
 # The order blocks is constant throughout the entire experiment
+
+run_all_tests()
 
 for i in range(1, 100):
     df_trials = generator.create_experiment_trials(i)
