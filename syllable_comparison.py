@@ -15,16 +15,17 @@ hejtmanek@praha.psu.cas.cz
 # =======================================================================
 # SETTINGS  NEED TO CHANGE FOR EACH PARTICIPANT
 PARTICIPANT_ID = 1 # ID of the participant as a number
+SHOULD_TRIGGER = False # True if you want to send triggers to the EEG
 TRIGGERBOX_COM = 'COM4' # COM port of the trigger box, need to check it before the experiment 
 # using the triggerBox software. It generally stays at the same port, but it can change
 MOVIE_WINDOWS_NAME = 'Krtek.mp4 - Multimediální přehrávač VLC' # This is the name of the window
 # that the movie is played in. It can be found out by running the list_open_windows.py script in the root
+MOVIE_REQUIRED = False # True if you want to play a movie during the experiment. Generally
 
 # =======================================================================
 # DEFAULT SETTINGS - DO NOT CHANGE UNLESS YOU KNOW WHAT YOU ARE DOING
 # THESE SHOULD BE THE SAME THROUGHOUT THE ENTIRE EXPERIMENTAL RUN 
 # changed only between different experiments or for testing purposes
-SHOULD_TRIGGER = False # True if you want to send triggers to the EEG
 RECALCULATE_INTER_TRIAL = True # True if you want to recalculate the intertrial time between each trial so 
 # that the total time of trial sound duration and intertrial is the same for all trials
 BLOCK_INTERTRIAL = (15000, 20000) # intertrial interval in miliseconds for the pause between blocks
@@ -32,7 +33,6 @@ TRIAL_DURATION = 700 # Length of the trial
 RANDOM_SEED = 111 # Seed for the intertrials
 TRIGGER_DURATION = 0.1
 fNIRS_IMPLEMENTED = False # True if you want to send triggers to the fNIRS
-MOVIE_REQUIRED = False # True if you want to play a movie during the experiment. Generally
 # set to false during debugging
 
 # IMPORTS =======================================================================

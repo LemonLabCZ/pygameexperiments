@@ -18,20 +18,19 @@ PARTICIPANT_ID = 1 # ID of the participant as a number
 TRIGGERBOX_COM = 'COM4' # COM port of the trigger box, need to check it before the experiment 
 # using the triggerBox software. It generally stays at the same port, but it can change
 MOVIE_WINDOWS_NAME = 'Krtek.mp4 - Multimediální přehrávač VLC' # This is the name of the window
-
+SHOULD_TRIGGER = False # True if you want to send triggers to the EEG
+MOVIE_REQUIRED = False # True if you want to play a movie during the experiment. Generally
 
 # =======================================================================
 # DEFAULT SETTINGS - DO NOT CHANGE UNLESS YOU KNOW WHAT YOU ARE DOING
 # THESE SHOULD BE THE SAME THROUGHOUT THE ENTIRE EXPERIMENTAL RUN 
 # changed only between different experiments or for testing purposes
-SHOULD_TRIGGER = False # True if you want to send triggers to the EEG
 RECALCULATE_INTER_TRIAL = True # True if you want to compensate for potential trigger delays caused by the serial communication
 BLOCK_INTERTRIAL = (15000, 20000) # intertrial interval in milliseconds for the pause between blocks
 INTERTRIAL_RANGE = [900, 1100] # If list(2) then randomizes between the two values. If a single value, then keeps it at that value
 RANDOM_SEED = 111 # Seed for the intertrials
 TRIGGER_DURATION = 0.1
 fNIRS_IMPLEMENTED = False # True if you want to send triggers to the fNIRS
-MOVIE_REQUIRED = False # True if you want to play a movie during the experiment. Generally
 # set to false during debugging
 
 # IMPORTS =======================================================================
