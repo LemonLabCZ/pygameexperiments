@@ -58,7 +58,7 @@ else:
 
 
 if MOVIE_REQUIRED:
-    from src.connections import VideoControl
+    from src.core.video_control import VideoControl
 ## =======================================================================
 # FUNCTIONS
 def load_stimuli(file_name):
