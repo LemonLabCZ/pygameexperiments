@@ -161,4 +161,5 @@ cython_debug/
 #.idea/
 logs/
 
-settings/
+# macOS helper files
+**/.DS_Store
