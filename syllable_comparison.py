@@ -29,7 +29,7 @@ MOVIE_REQUIRED = False # True if you want to play a movie during the experiment.
 RECALCULATE_INTER_TRIAL = True # True if you want to recalculate the intertrial time between each trial so 
 # that the total time of trial sound duration and intertrial is the same for all trials
 BLOCK_INTERTRIAL = (15000, 20000) # intertrial interval in miliseconds for the pause between blocks
-TRIAL_DURATION = 700 # Length of the trial
+INTERTRIAL_RANGE = [600, 1000]
 RANDOM_SEED = 111 # Seed for the intertrials
 TRIGGER_DURATION = 0.1
 fNIRS_IMPLEMENTED = False # True if you want to send triggers to the fNIRS
@@ -49,7 +49,10 @@ import os
 from src.utils import getScreenSize
 import src.core.experimental_flow as flow
 import src.syllable_comparison.experiment as experiment
-import src.core.video_control as VideoControl
+
+if MOVIE_REQUIRED:
+    import src.core.video_control as VideoControl
+import random
 
 if SHOULD_TRIGGER:
     from src.connections import sendTrigger
@@ -70,7 +73,7 @@ def path_to_stimulus(filename):
     return os.path.join(os.getcwd(), 'stimuli', 'syllable_comparison', filename)
 
 
-def play_trial(iTrial, df_stimuli, should_trigger, com, recalculate_inter_trial = False):
+def play_trial(iTrial, df_stimuli, intertrials, should_trigger, com, recalculate_inter_trial = False):
     """_summary_
     Args:
         iTrial (int): Trial index, starting from 0
@@ -85,6 +88,8 @@ def play_trial(iTrial, df_stimuli, should_trigger, com, recalculate_inter_trial 
         list: returns list with timings of the trial
     """
     timings = dict()
+    inter_trial = intertrials[iTrial]
+    
     # This will change in case we need to repeat stimuli, now they just play once
     trial_info = df_stimuli.iloc[iTrial]
     timings['trial_start'] = flow.get_time_since_start(start_time)
@@ -95,7 +100,7 @@ def play_trial(iTrial, df_stimuli, should_trigger, com, recalculate_inter_trial 
     timings['sound_started'] = flow.get_time_since_start(start_time)
     sound2play.play(loops = 0)
     #waittime_ms = round(timings['sound_duration']*1000)
-    waittime_ms = TRIAL_DURATION
+    waittime_ms = round(timings['sound_duration']*1000)
 
     if should_trigger:
         timings['trigger_started'] = flow.flow.get_time_since_start(start_time)
@@ -113,9 +118,9 @@ def play_trial(iTrial, df_stimuli, should_trigger, com, recalculate_inter_trial 
     # Substracts the extra duration of the trigger from the intertrial time (generally 17 ms for the trigger box)
     if recalculate_inter_trial:
         ms_trigger_delay = round((timings['trigger_ended'] - timings['trigger_started'])*1000)
-        pygame.time.delay(waittime_ms - ms_trigger_delay)
+        pygame.time.delay(waittime_ms + inter_trial - ms_trigger_delay)
     else:
-        pygame.time.delay(waittime_ms)
+        pygame.time.delay(waittime_ms + inter_trial)
     
     sound2play.stop()
     timings['sound_ended'] = flow.get_time_since_start(start_time)
@@ -139,6 +144,12 @@ start_time = datetime.now()
 last_datetime = start_time
 
 block_intertrials = experiment.generate_block_intertrials(PARTICIPANT_ID, BLOCK_INTERTRIAL, n_blocks)
+
+# Randomizes intertrial times or keeps it at a fixed value if the length is one
+if len(INTERTRIAL_RANGE) == 1:
+    intertrials = [INTERTRIAL_RANGE[0]] * n_trials
+if len(INTERTRIAL_RANGE) == 2:
+    intertrials = random.choices(range(INTERTRIAL_RANGE[0], INTERTRIAL_RANGE[1]), k=n_trials)
 
 df_timings = flow.prepare_log_table(add_fNIRS=fNIRS_IMPLEMENTED)
 timestamp = start_time.strftime('%Y%m%d-%H%M%S')
@@ -171,7 +182,7 @@ for iTrial in range(0, df_stimuli.shape[0]):
         pygame.time.delay(block_intertrial)
         print(f'Pause ended')
         df_timings.to_csv(log_filename, index=False, header=True, mode="w")
-    timings = play_trial(iTrial, df_stimuli, SHOULD_TRIGGER, COMPORT, RECALCULATE_INTER_TRIAL)
+    timings = play_trial(iTrial, df_stimuli, intertrials, SHOULD_TRIGGER, COMPORT, RECALCULATE_INTER_TRIAL)
     df_timings = df_timings._append(timings, ignore_index = True)
     last_block = this_block
 

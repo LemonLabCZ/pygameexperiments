@@ -77,6 +77,8 @@ def create_block_trials(trial_type, seed):
         seed (int): Seed used to allow same random order across multiple participants
     """
     trial_types = [trial_type] * 25
+    stimulus_types = [StimulusType.standard] * 25
+    stimulus_types[6] = stimulus_types[9]  = stimulus_types[13] = stimulus_types[15] = stimulus_types[18] = stimulus_types[20]  = stimulus_types[23] = StimulusType.deviant
     stimuli_second_phase = [StimulusType.deviant] * N_DEVIANT_TRIALS + [StimulusType.standard] * N_STANDARD_TRIALS
     stimuli_second_phase = distribute_deviants(stimuli_second_phase, seed)
     if stimuli_second_phase is None:
