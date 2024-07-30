@@ -1,7 +1,6 @@
 import random
 import os
 from src.standard_nonstandard import settings_generation as generator
-from tests.standard_nonstandard.test_settings_generation import run_all_tests
 
 random.seed(2024)
 

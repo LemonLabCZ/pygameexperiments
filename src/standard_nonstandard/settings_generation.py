@@ -3,10 +3,11 @@ from collections import deque
 import pandas as pd
 import numpy as np
 from dataclasses import dataclass
+import random
 
 @dataclass
 class Parameters:
-    n_stimuli_variants = 4
+    n_repetitions = 4
     n_stimuli_per_block = 4
 
 
@@ -17,7 +18,7 @@ class BlockType(Enum):
     
 class TrialType(Enum):
     Czech = "st"
-    Ostrava = "nst"
+    Ostrava = "d"
 
 
 def opposing_type(trial_type):
@@ -69,6 +70,11 @@ def create_set_trials(shift_number):
     return conditions, block_types, block_numbers
 
 
+def draw_stimuli(seed):
+    stimuli_all = list(range(1,98)) + list(range(99, 134))
+  
+    return random.sample(stimuli_all, 64)
+    
 def create_experiment_trials(settings_number):
     """Generate dataframe with all trial settings
 
@@ -84,21 +90,17 @@ def create_experiment_trials(settings_number):
     trial = 1
     # shifting number is 0 for 1 and 2, 1 for 3 and 4, 2 for 5 and 6 and so on
     shift_number = np.floor((settings_number - 1) / 2).astype(int)
-    # Even numbers have ascending order, odd numbers have descending order of sentences
-    if settings_number % 2 == 1:
-        sentence_variants = list(range(1, Parameters.n_stimuli_variants + 1))
-    else:
-        sentence_variants = list(range(1, Parameters.n_stimuli_variants + 1))
-        sentence_variants.reverse()
+    
+    sentence_variants = draw_stimuli(settings_number)
 
-    for set_number in range(1, Parameters.n_stimuli_variants + 1):
+    for set_number in range(1, Parameters.n_repetitions + 1):
         conditions, block_types, block_numbers = create_set_trials(shift_number)
         df_set = pd.DataFrame({'trial': range(trial, trial + len(conditions)),
                               'condition': conditions,
                               'block_number': block_numbers,
                               'block_type': block_types,
                               'set_number': set_number,
-                              'stimulus_number': sentence_variants[set_number - 1]})
+                              'stimulus_number': sentence_variants[trial - 1 : trial - 1 + len(conditions)]})
         # stimulus is a f'{condition}_{stimulus_number}.wav' for each row
         df_set["stimulus"] = df_set.apply(lambda x: generate_stimulus_filename(x["condition"], x["stimulus_number"]), axis=1)
         df_trials = pd.concat([df_trials, df_set], axis=0)
@@ -122,8 +124,8 @@ def create_experiment_inter_trials(rang, settings_number):
     """
     np.random.seed(1111)
     df_inter_trials = pd.DataFrame(columns=["block", "inter_trial"])
-    df_inter_trials["block"] = range(1, Parameters.n_stimuli_variants)
-    df_inter_trials["inter_trial"] = np.random.randint(rang[0], rang[1], size=Parameters.n_stimuli_variants - 1)
+    df_inter_trials["block"] = range(1, Parameters.n_repetitions)
+    df_inter_trials["inter_trial"] = np.random.randint(rang[0], rang[1], size=Parameters.n_repetitions - 1)
     return df_inter_trials
 
 
@@ -137,5 +139,5 @@ def generate_stimulus_filename(condition, stimulus_number):
     Returns:
         string : name of the file with the stimulus
     """
-    return f"{condition.value}{stimulus_number}.wav"
+    return f"{stimulus_number:02}_{condition.value}_4.wav"
 
