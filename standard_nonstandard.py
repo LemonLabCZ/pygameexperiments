@@ -15,11 +15,13 @@ hejtmanek@praha.psu.cas.cz
 # =======================================================================
 # SETTINGS  NEED TO CHANGE FOR EACH PARTICIPANT
 PARTICIPANT_ID = 14 # ID of the participant as a number
-TRIGGERBOX_COM = 'COM4' # COM port of the trigger box, need to check it before the experiment 
+TRIGGERBOX_COM = 'COM3' # COM port of the trigger box, need to check it before the experiment 
 # using the triggerBox software. It generally stays at the same port, but it can change
 MOVIE_WINDOWS_NAME = 'Amalka.mp4 - Multimediální přehrávač VLC' # This is the name of the window
-SHOULD_TRIGGER = False # True if you want to send triggers to the EEG
+SHOULD_TRIGGER = True # True if you want to send triggers to the EEG
 MOVIE_REQUIRED = True # True if you want to play a movie during the experiment. Generally
+fNIRS_IMPLEMENTED = True # True if you want to send triggers to the fNIRS
+# set to false during debugging
 
 # =======================================================================
 # DEFAULT SETTINGS - DO NOT CHANGE UNLESS YOU KNOW WHAT YOU ARE DOING
@@ -30,8 +32,7 @@ BLOCK_INTERTRIAL = (15000, 20000) # intertrial interval in milliseconds for the 
 INTERTRIAL_RANGE = [900, 1100] # If list(2) then randomizes between the two values. If a single value, then keeps it at that value
 RANDOM_SEED = 111 # Seed for the intertrials
 TRIGGER_DURATION = 0.1
-fNIRS_IMPLEMENTED = False # True if you want to send triggers to the fNIRS
-# set to false during debugging
+
 
 # IMPORTS =======================================================================
 
@@ -109,7 +110,7 @@ def play_trial(iTrial, df_stimuli, intertrials, should_trigger, com, recalculate
         if fNIRS_IMPLEMENTED:
             timings['trigger_cpod_started'] = flow.get_time_since_start(start_time)
             # THE CPOD TRIGGER IS FROM fNIRS CPOD box, not implemented in this experiment
-            # sendTriggerCPOD(cpod, 5, 0.01)
+            #sendTriggerCPOD(cpod, 5, 0.01)
             timings['trigger_cpod_ended'] = flow.get_time_since_start(start_time)
         timings['trigger_ended'] = flow.get_time_since_start(start_time)
     else:

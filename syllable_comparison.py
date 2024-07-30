@@ -16,11 +16,13 @@ hejtmanek@praha.psu.cas.cz
 # SETTINGS  NEED TO CHANGE FOR EACH PARTICIPANT
 PARTICIPANT_ID = 14 # ID of the participant as a number
 SHOULD_TRIGGER = True # True if you want to send triggers to the EEG
-TRIGGERBOX_COM = 'COM4' # COM port of the trigger box, need to check it before the experiment 
+TRIGGERBOX_COM = 'COM3' # COM port of the trigger box, need to check it before the experiment 
 # using the triggerBox software. It generally stays at the same port, but it can change
 MOVIE_WINDOWS_NAME = 'Amalka.mp4 - Multimediální přehrávač VLC' # This is the name of the window
 # that the movie is played in. It can be found out by running the list_open_windows.py script in the root
 MOVIE_REQUIRED = True # True if you want to play a movie during the experiment. Generally
+fNIRS_IMPLEMENTED = True # True if you want to send triggers to the fNIRS
+# set to false during debugging
 
 # =======================================================================
 # DEFAULT SETTINGS - DO NOT CHANGE UNLESS YOU KNOW WHAT YOU ARE DOING
@@ -32,8 +34,7 @@ BLOCK_INTERTRIAL = (15000, 20000) # intertrial interval in miliseconds for the p
 INTERTRIAL_RANGE = [400, 600]
 RANDOM_SEED = 111 # Seed for the intertrials
 TRIGGER_DURATION = 0.1
-fNIRS_IMPLEMENTED = False # True if you want to send triggers to the fNIRS
-# set to false during debugging
+
 
 # IMPORTS =======================================================================
 
