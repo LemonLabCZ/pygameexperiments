@@ -2,11 +2,13 @@ import pandas as pd
 import numpy as np
 from enum import Enum
 import os
+from collections import defaultdict
 
 N_STANDARD_TRIALS_START = 5
 N_DEVIANT_TRIALS = 7
 N_STANDARD_TRIALS = 13
 
+POOL = defaultdict(list)
 
 class TrialType(Enum):
     language_spectral = "language_spectral"
@@ -62,6 +64,7 @@ def create_set_trials(set_number, cannot_start_with=None):
         # in the first set will always have the same order of trials
         block_seed = set_number + list(TrialType).index(block)
         trial_types, stimulus_types = create_block_trials(block, block_seed)
+    #    POOL[block].append(stimulus_types)
         set_trial_types.extend(trial_types)
         set_stimulus_types.extend(stimulus_types)
         set_block_numbers.extend([iBlock] * 25)
@@ -69,7 +72,7 @@ def create_set_trials(set_number, cannot_start_with=None):
     return set_block_numbers, set_trial_types, set_stimulus_types
 
 
-def create_block_trials(trial_type, seed):
+def create_block_trials(trial_type, seed, block=1):
     """Creates a block of 25 trials
 
     Args:
@@ -77,10 +80,8 @@ def create_block_trials(trial_type, seed):
         seed (int): Seed used to allow same random order across multiple participants
     """
     trial_types = [trial_type] * 25
-    stimulus_types = [StimulusType.standard] * 25
-    stimulus_types[6] = stimulus_types[9]  = stimulus_types[13] = stimulus_types[15] = stimulus_types[18] = stimulus_types[20]  = stimulus_types[23] = StimulusType.deviant
-    stimuli_second_phase = [StimulusType.deviant] * N_DEVIANT_TRIALS + [StimulusType.standard] * N_STANDARD_TRIALS
-    stimuli_second_phase = distribute_deviants(stimuli_second_phase, seed)
+    stimuli_second_phase = [StimulusType.standard] * (N_DEVIANT_TRIALS + N_STANDARD_TRIALS)
+    stimuli_second_phase = insert_deviants(stimuli_second_phase, trial_type,seed)
     if stimuli_second_phase is None:
         raise Exception('Could not distribute deviants')
     stimulus_types = [StimulusType.standard] * N_STANDARD_TRIALS_START
@@ -88,20 +89,48 @@ def create_block_trials(trial_type, seed):
     return trial_types, stimulus_types
 
 
-def distribute_deviants(trial_sequence, seed):
-    """This will be a bruteforce method to distribute deviants. 
-    I just shuffle until the condition is met. Generally takes only 1-10 iterations.
+def no_doubles(pauses):
+    """
+    Checks that two consecutive pauses between deviants are not the same length (so the patricipant does not anticipate the deviant sound)
 
+    Args:
+        (list of int): A list of standard counts between deviants
+    """
+    for i in range(len(pauses)-1):
+        if pauses[i] == pauses[i+1]:
+            return False
+    return True
+
+def insert_deviants(trial_sequence, trial_type, seed):
+    """
+    Inserts the correct number of deviants with given standard pausses  into a list of standard stimli
+    
     Args:
         trial_sequence (list of StimulusType): A list of stimulus types
     """
+    pauses = [1,1,2,2,3,3]
     local_random = np.random.default_rng(seed)
     for i in range(100):
-        trial_sequence = local_random.permutation(trial_sequence)
-        if max_consecutive_deviants(trial_sequence) <= 2:
-            return trial_sequence
-    return None
+        # Shuffle until you find such a placement where two adjacent pauses between deviants are not the same length
+        pauses = local_random.permutation(pauses)
+        # Check the POOL to see if we used this order for this block type before and keep suffling if we did (we do not want the same participant to hear the identical sequence)
+        if no_doubles(pauses) and str(pauses) not in POOL[trial_type]:
+            break
+    if i == 100:
+        return None
 
+    index = 0
+    trial_sequence[index] = StimulusType.deviant
+    for p in pauses:
+        index += p + 1
+        trial_sequence[index] = StimulusType.deviant
+    # penultimate stimulus must always be deviant
+    assert index == 18
+    POOL[trial_type].append(str(pauses))
+
+    
+    return trial_sequence
+        
 
 def count_consecutive_elements(elements):
     result = [1]  # Initialize the result list with 1 for the first element
