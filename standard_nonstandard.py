@@ -14,12 +14,12 @@ hejtmanek@praha.psu.cas.cz
 
 # =======================================================================
 # SETTINGS  NEED TO CHANGE FOR EACH PARTICIPANT
-PARTICIPANT_ID = 1 # ID of the participant as a number
+PARTICIPANT_ID = 14 # ID of the participant as a number
 TRIGGERBOX_COM = 'COM4' # COM port of the trigger box, need to check it before the experiment 
 # using the triggerBox software. It generally stays at the same port, but it can change
-MOVIE_WINDOWS_NAME = 'Krtek.mp4 - Multimediální přehrávač VLC' # This is the name of the window
+MOVIE_WINDOWS_NAME = 'Amalka.mp4 - Multimediální přehrávač VLC' # This is the name of the window
 SHOULD_TRIGGER = False # True if you want to send triggers to the EEG
-MOVIE_REQUIRED = False # True if you want to play a movie during the experiment. Generally
+MOVIE_REQUIRED = True # True if you want to play a movie during the experiment. Generally
 
 # =======================================================================
 # DEFAULT SETTINGS - DO NOT CHANGE UNLESS YOU KNOW WHAT YOU ARE DOING
@@ -57,7 +57,7 @@ else:
 
 
 if MOVIE_REQUIRED:
-    from src.core.video_control import VideoControl
+    import src.core.video_control as VideoControl
 ## =======================================================================
 # FUNCTIONS
 def load_stimuli(file_name):

@@ -14,13 +14,13 @@ hejtmanek@praha.psu.cas.cz
 
 # =======================================================================
 # SETTINGS  NEED TO CHANGE FOR EACH PARTICIPANT
-PARTICIPANT_ID = 1 # ID of the participant as a number
-SHOULD_TRIGGER = False # True if you want to send triggers to the EEG
+PARTICIPANT_ID = 14 # ID of the participant as a number
+SHOULD_TRIGGER = True # True if you want to send triggers to the EEG
 TRIGGERBOX_COM = 'COM4' # COM port of the trigger box, need to check it before the experiment 
 # using the triggerBox software. It generally stays at the same port, but it can change
-MOVIE_WINDOWS_NAME = 'Krtek.mp4 - Multimediální přehrávač VLC' # This is the name of the window
+MOVIE_WINDOWS_NAME = 'Amalka.mp4 - Multimediální přehrávač VLC' # This is the name of the window
 # that the movie is played in. It can be found out by running the list_open_windows.py script in the root
-MOVIE_REQUIRED = False # True if you want to play a movie during the experiment. Generally
+MOVIE_REQUIRED = True # True if you want to play a movie during the experiment. Generally
 
 # =======================================================================
 # DEFAULT SETTINGS - DO NOT CHANGE UNLESS YOU KNOW WHAT YOU ARE DOING
@@ -103,7 +103,7 @@ def play_trial(iTrial, df_stimuli, intertrials, should_trigger, com, recalculate
     waittime_ms = round(timings['sound_duration']*1000)
 
     if should_trigger:
-        timings['trigger_started'] = flow.flow.get_time_since_start(start_time)
+        timings['trigger_started'] = flow.get_time_since_start(start_time)
         timings['trigger_com_started'] = flow.get_time_since_start(start_time)
         sendTrigger(5, com, TRIGGER_DURATION)
         timings['trigger_com_ended'] = flow.get_time_since_start(start_time)
