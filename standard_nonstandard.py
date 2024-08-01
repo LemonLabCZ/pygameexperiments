@@ -14,10 +14,10 @@ hejtmanek@praha.psu.cas.cz
 
 # =======================================================================
 # SETTINGS  NEED TO CHANGE FOR EACH PARTICIPANT
-PARTICIPANT_ID = 14 # ID of the participant as a number
+PARTICIPANT_ID = 11 # ID of the participant as a number
 TRIGGERBOX_COM = 'COM3' # COM port of the trigger box, need to check it before the experiment 
 # using the triggerBox software. It generally stays at the same port, but it can change
-MOVIE_WINDOWS_NAME = 'Amalka.mp4 - Multimediální přehrávač VLC' # This is the name of the window
+MOVIE_WINDOWS_NAME = 'Krtek.mp4 - Multimediální přehrávač VLC' # This is the name of the window
 SHOULD_TRIGGER = True # True if you want to send triggers to the EEG
 MOVIE_REQUIRED = True # True if you want to play a movie during the experiment. Generally
 fNIRS_IMPLEMENTED = True # True if you want to send triggers to the fNIRS
@@ -49,6 +49,7 @@ from src.experiment import stimulus, presentRating
 from src.calibrations import mouseCalibration, eyetrackerCalibration, calibrationOK
 from src.utils import initScreen, getScreenSize
 import src.core.experimental_flow as flow
+from src.connections import sendTriggerCPOD, find_cpod
 
 if SHOULD_TRIGGER:
     from src.connections import sendTrigger
@@ -110,7 +111,8 @@ def play_trial(iTrial, df_stimuli, intertrials, should_trigger, com, recalculate
         if fNIRS_IMPLEMENTED:
             timings['trigger_cpod_started'] = flow.get_time_since_start(start_time)
             # THE CPOD TRIGGER IS FROM fNIRS CPOD box, not implemented in this experiment
-            #sendTriggerCPOD(cpod, 5, 0.01)
+            cpod = find_cpod()[1][0]
+            sendTriggerCPOD(cpod, 5, 0.01)
             timings['trigger_cpod_ended'] = flow.get_time_since_start(start_time)
         timings['trigger_ended'] = flow.get_time_since_start(start_time)
     else:

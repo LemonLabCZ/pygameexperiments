@@ -14,7 +14,7 @@ hejtmanek@praha.psu.cas.cz
 
 # =======================================================================
 # SETTINGS  NEED TO CHANGE FOR EACH PARTICIPANT
-PARTICIPANT_ID = 14 # ID of the participant as a number
+PARTICIPANT_ID = 11 # ID of the participant as a number
 SHOULD_TRIGGER = True # True if you want to send triggers to the EEG
 TRIGGERBOX_COM = 'COM3' # COM port of the trigger box, need to check it before the experiment 
 # using the triggerBox software. It generally stays at the same port, but it can change
@@ -50,6 +50,7 @@ import os
 from src.utils import getScreenSize
 import src.core.experimental_flow as flow
 import src.syllable_comparison.experiment as experiment
+from src.connections import sendTriggerCPOD, find_cpod
 
 if MOVIE_REQUIRED:
     import src.core.video_control as VideoControl
@@ -110,7 +111,8 @@ def play_trial(iTrial, df_stimuli, intertrials, should_trigger, com, recalculate
         timings['trigger_com_ended'] = flow.get_time_since_start(start_time)
         if fNIRS_IMPLEMENTED:
             timings['trigger_cpod_started'] = flow.get_time_since_start(start_time)
-            # sendTriggerCPOD(cpod, 5, 0.01)
+            cpod = find_cpod()[1][0]
+            sendTriggerCPOD(cpod, 5, 0.01)
             timings['trigger_cpod_ended'] = flow.get_time_since_start(start_time)
         timings['trigger_ended'] = flow.get_time_since_start(start_time)
     else:
