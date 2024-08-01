@@ -50,7 +50,7 @@ import os
 from src.utils import getScreenSize
 import src.core.experimental_flow as flow
 import src.syllable_comparison.experiment as experiment
-from src.connections import sendTriggerCPOD, find_cpod
+
 
 if MOVIE_REQUIRED:
     import src.core.video_control as VideoControl
@@ -58,6 +58,7 @@ import random
 
 if SHOULD_TRIGGER:
     from src.connections import sendTrigger
+    from src.connections import sendTriggerCPOD, find_cpod
     COMPORT = TRIGGERBOX_COM
 else:
     COMPORT = None
@@ -103,16 +104,18 @@ def play_trial(iTrial, df_stimuli, intertrials, should_trigger, com, recalculate
     sound2play.play(loops = 0)
     #waittime_ms = round(timings['sound_duration']*1000)
     waittime_ms = round(timings['sound_duration']*1000)
+    trigger = int(trial_info['trigger'])
+    
 
     if should_trigger:
         timings['trigger_started'] = flow.get_time_since_start(start_time)
         timings['trigger_com_started'] = flow.get_time_since_start(start_time)
-        sendTrigger(5, com, TRIGGER_DURATION)
+        sendTrigger(trigger, com, TRIGGER_DURATION)
         timings['trigger_com_ended'] = flow.get_time_since_start(start_time)
         if fNIRS_IMPLEMENTED:
             timings['trigger_cpod_started'] = flow.get_time_since_start(start_time)
             cpod = find_cpod()[1][0]
-            sendTriggerCPOD(cpod, 5, 0.01)
+            sendTriggerCPOD(cpod, trigger, 0.01)
             timings['trigger_cpod_ended'] = flow.get_time_since_start(start_time)
         timings['trigger_ended'] = flow.get_time_since_start(start_time)
     else:

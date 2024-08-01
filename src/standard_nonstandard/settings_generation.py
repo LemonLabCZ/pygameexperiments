@@ -95,12 +95,14 @@ def create_experiment_trials(settings_number):
 
     for set_number in range(1, Parameters.n_repetitions + 1):
         conditions, block_types, block_numbers = create_set_trials(shift_number)
+        triggers = [int(10 * block_number + (n % 4 + 1)) for n, block_number in enumerate(block_numbers)]
         df_set = pd.DataFrame({'trial': range(trial, trial + len(conditions)),
                               'condition': conditions,
                               'block_number': block_numbers,
                               'block_type': block_types,
                               'set_number': set_number,
-                              'stimulus_number': sentence_variants[trial - 1 : trial - 1 + len(conditions)]})
+                              'stimulus_number': sentence_variants[trial - 1 : trial - 1 + len(conditions)],
+                              'trigger': triggers})
         # stimulus is a f'{condition}_{stimulus_number}.wav' for each row
         df_set["stimulus"] = df_set.apply(lambda x: generate_stimulus_filename(x["condition"], x["stimulus_number"]), axis=1)
         df_trials = pd.concat([df_trials, df_set], axis=0)

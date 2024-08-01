@@ -33,11 +33,13 @@ def create_experiment_trials(random_seed=1111):
     for i in range(1, 6):
         cannot_start_with = None if i == 1 else set_trial_types[-1]
         set_block_numbers, set_trial_types, set_stimulus_types = create_set_trials(i, cannot_start_with=cannot_start_with)
+        set_triggers = [int(10*list(TrialType).index(trial_type) + list(StimulusType).index(stim_type)) for trial_type, stim_type in zip(set_trial_types, set_stimulus_types)]
         df_set = pd.DataFrame({'trial': range(iTrial, iTrial + len(set_trial_types)),
                                'set_number': i,
                                'block_number': set_block_numbers,
                                'trial_type': set_trial_types,
-                               'stimulus_type': set_stimulus_types})
+                               'stimulus_type': set_stimulus_types,
+                               'trigger': set_triggers})
         df_set["stimulus"] = df_set.apply(lambda x: generate_stimulus_filename(x["trial_type"], x["stimulus_type"]), axis=1)
         df_trials = pd.concat([df_trials, df_set], axis=0)
         iTrial += len(set_trial_types)

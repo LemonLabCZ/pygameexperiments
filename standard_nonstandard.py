@@ -18,8 +18,8 @@ PARTICIPANT_ID = 11 # ID of the participant as a number
 TRIGGERBOX_COM = 'COM3' # COM port of the trigger box, need to check it before the experiment 
 # using the triggerBox software. It generally stays at the same port, but it can change
 MOVIE_WINDOWS_NAME = 'Krtek.mp4 - Multimediální přehrávač VLC' # This is the name of the window
-SHOULD_TRIGGER = True # True if you want to send triggers to the EEG
-MOVIE_REQUIRED = True # True if you want to play a movie during the experiment. Generally
+SHOULD_TRIGGER = False # True if you want to send triggers to the EEG
+MOVIE_REQUIRED = False # True if you want to play a movie during the experiment. Generally
 fNIRS_IMPLEMENTED = True # True if you want to send triggers to the fNIRS
 # set to false during debugging
 
@@ -49,10 +49,11 @@ from src.experiment import stimulus, presentRating
 from src.calibrations import mouseCalibration, eyetrackerCalibration, calibrationOK
 from src.utils import initScreen, getScreenSize
 import src.core.experimental_flow as flow
-from src.connections import sendTriggerCPOD, find_cpod
+
 
 if SHOULD_TRIGGER:
     from src.connections import sendTrigger
+    from src.connections import sendTriggerCPOD, find_cpod
     COMPORT = TRIGGERBOX_COM
 else:
     COMPORT = None
@@ -95,6 +96,7 @@ def play_trial(iTrial, df_stimuli, intertrials, should_trigger, com, recalculate
     df_trial = df_stimuli.iloc[iTrial]
     stim = df_trial['stimulus']
     sound_path = path_to_stimulus(stim)
+    trigger = int(df_trial['trigger'])
     
     print(f'{flow.get_time_since_start(start_time)}: Trial {iTrial}. {df_trial["block_type"]}. {df_trial["condition"]}. Stimulus {stim}')
 
@@ -106,13 +108,13 @@ def play_trial(iTrial, df_stimuli, intertrials, should_trigger, com, recalculate
     if should_trigger:
         timings['trigger_started'] = flow.get_time_since_start(start_time)
         timings['trigger_com_started'] = flow.get_time_since_start(start_time)
-        sendTrigger(5, com, TRIGGER_DURATION)
+        sendTrigger(trigger, com, TRIGGER_DURATION)
         timings['trigger_com_ended'] = flow.get_time_since_start(start_time)
         if fNIRS_IMPLEMENTED:
             timings['trigger_cpod_started'] = flow.get_time_since_start(start_time)
             # THE CPOD TRIGGER IS FROM fNIRS CPOD box, not implemented in this experiment
             cpod = find_cpod()[1][0]
-            sendTriggerCPOD(cpod, 5, 0.01)
+            sendTriggerCPOD(cpod, trigger, 0.01)
             timings['trigger_cpod_ended'] = flow.get_time_since_start(start_time)
         timings['trigger_ended'] = flow.get_time_since_start(start_time)
     else:
