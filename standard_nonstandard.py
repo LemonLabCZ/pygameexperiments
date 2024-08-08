@@ -18,15 +18,16 @@ PARTICIPANT_ID = 11 # ID of the participant as a number
 TRIGGERBOX_COM = 'COM3' # COM port of the trigger box, need to check it before the experiment 
 # using the triggerBox software. It generally stays at the same port, but it can change
 MOVIE_WINDOWS_NAME = 'Krtek.mp4 - Multimediální přehrávač VLC' # This is the name of the window
-SHOULD_TRIGGER = False # True if you want to send triggers to the EEG
-MOVIE_REQUIRED = False # True if you want to play a movie during the experiment. Generally
-fNIRS_IMPLEMENTED = True # True if you want to send triggers to the fNIRS
-# set to false during debugging
+
 
 # =======================================================================
 # DEFAULT SETTINGS - DO NOT CHANGE UNLESS YOU KNOW WHAT YOU ARE DOING
 # THESE SHOULD BE THE SAME THROUGHOUT THE ENTIRE EXPERIMENTAL RUN 
 # changed only between different experiments or for testing purposes
+EEG_TRIGGER = True # True if you want to send triggers to the EEG
+MOVIE_REQUIRED = True # True if you want to play a movie during the experiment. Generally
+fNIRS_TRIGGER = True # True if you want to send triggers to the fNIRS
+# set to false during debugging
 RECALCULATE_INTER_TRIAL = True # True if you want to compensate for potential trigger delays caused by the serial communication
 BLOCK_INTERTRIAL = (15000, 20000) # intertrial interval in milliseconds for the pause between blocks
 INTERTRIAL_RANGE = [900, 1100] # If list(2) then randomizes between the two values. If a single value, then keeps it at that value
@@ -52,9 +53,8 @@ from src.utils import initScreen, getScreenSize
 import src.core.experimental_flow as flow
 
 
-if SHOULD_TRIGGER:
+if EEG_TRIGGER:
     from src.connections import sendTrigger
-    from src.connections import sendTriggerCPOD, find_cpod
     COMPORT = TRIGGERBOX_COM
 else:
     COMPORT = None
@@ -63,7 +63,8 @@ else:
 if MOVIE_REQUIRED:
     import src.core.video_control as VideoControl
     
-if fNIRS_IMPLEMENTED:
+if fNIRS_TRIGGER:
+    from src.connections import sendTriggerCPOD, find_cpod
     CPOD = find_cpod()[1][0]
 ## =======================================================================
 # FUNCTIONS
@@ -109,22 +110,19 @@ def play_trial(iTrial, df_stimuli, intertrials, should_trigger, com, recalculate
     timings['sound_started'] = flow.get_time_since_start(start_time)
     sound2play.play(loops = 0)
     waittime_ms = round(timings['sound_duration']*1000)
-    if should_trigger:
-        timings['trigger_started'] = flow.get_time_since_start(start_time)
+    timings['trigger_started'] = flow.get_time_since_start(start_time)
+    if should_trigger:       
         timings['trigger_com_started'] = flow.get_time_since_start(start_time)
-        sendTrigger(trigger, com, TRIGGER_DURATION)
+        thread = threading.Thread(target=sendTrigger,args=(trigger, com, TRIGGER_DURATION))
+        thread.start()
         timings['trigger_com_ended'] = flow.get_time_since_start(start_time)
-        if fNIRS_IMPLEMENTED:
-            
-            timings['trigger_cpod_started'] = flow.get_time_since_start(start_time)
-            # THE CPOD TRIGGER IS FROM fNIRS CPOD box, not implemented in this experiment
-            thread = threading.Thread(target=sendTriggerCPOD,args=(CPOD, trigger, TRIGGER_DURATION))
-            thread.start()
-            timings['trigger_cpod_ended'] = flow.get_time_since_start(start_time)
-        timings['trigger_ended'] = flow.get_time_since_start(start_time)
-    else:
-        timings['trigger_started'] = flow.get_time_since_start(start_time)
-        timings['trigger_ended'] = timings['trigger_started']
+    if fNIRS_TRIGGER:           
+        timings['trigger_cpod_started'] = flow.get_time_since_start(start_time)
+        # Sending CPOD trigger takes cca 20ms, execute in a separate thread
+        thread = threading.Thread(target=sendTriggerCPOD,args=(CPOD, trigger, TRIGGER_DURATION*1000))
+        thread.start()
+        timings['trigger_cpod_ended'] = flow.get_time_since_start(start_time)        
+    timings['trigger_ended'] = flow.get_time_since_start(start_time)
     # Substracts the extraduration of the trigger from the intertrial time (generally 17 ms for the trigger box)
     if recalculate_inter_trial:
         ms_trigger_delay = round((timings['trigger_ended'] - timings['trigger_started'])*1000)
@@ -175,25 +173,26 @@ start_time = datetime.now()
 last_datetime = start_time
 
 # Experimental loop -----------------------
-timestamp = start_time.strftime('%Y%m%d-%H%M%S')
-df_timings = flow.prepare_log_table(add_fNIRS=fNIRS_IMPLEMENTED)
+try:
+    timestamp = start_time.strftime('%Y%m%d-%H%M%S')
+    df_timings = flow.prepare_log_table(add_fNIRS=fNIRS_TRIGGER)
 
-last_setblock = df_stimuli['set_number'][0]+df_stimuli['block_number'][0]
-current_block = 0
-for iTrial in range(0, df_stimuli.shape[0]):
-    setblock = df_stimuli['set_number'][iTrial]+df_stimuli['block_number'][iTrial]
-    if(last_setblock != setblock):
-        print(f'Pause between blocks started for {block_intertrials[current_block]/1000} seconds')
-        pygame.time.delay(block_intertrials[current_block])
-        print(f'Pause between blocks ended')
-        current_block += 1
-        df_timings.to_csv(f'logs/standard_nonstandard/{PARTICIPANT_ID}_{timestamp}_timings.csv', 
-                  index=False, header=True, mode='w')
-    timings = play_trial(iTrial, df_stimuli, intertrials, SHOULD_TRIGGER, COMPORT, RECALCULATE_INTER_TRIAL)
-    df_timings = df_timings._append(timings, ignore_index = True)
-    last_setblock = setblock
-
-df_timings.to_csv(f'logs/standard_nonstandard/{PARTICIPANT_ID}_{timestamp}_timings.csv', 
+    last_setblock = df_stimuli['set_number'][0]+df_stimuli['block_number'][0]
+    current_block = 0
+    for iTrial in range(0, df_stimuli.shape[0]):
+        setblock = df_stimuli['set_number'][iTrial]+df_stimuli['block_number'][iTrial]
+        if(last_setblock != setblock):
+            print(f'Pause between blocks started for {block_intertrials[current_block]/1000} seconds')
+            pygame.time.delay(block_intertrials[current_block])
+            print(f'Pause between blocks ended')
+            current_block += 1
+            df_timings.to_csv(f'logs/standard_nonstandard/{PARTICIPANT_ID}_{timestamp}_timings.csv', 
+                    index=False, header=True, mode='w')
+        timings = play_trial(iTrial, df_stimuli, intertrials, EEG_TRIGGER, COMPORT, RECALCULATE_INTER_TRIAL)
+        df_timings = df_timings._append(timings, ignore_index = True)
+        last_setblock = setblock
+finally:
+    df_timings.to_csv(f'logs/standard_nonstandard/{PARTICIPANT_ID}_{timestamp}_timings.csv', 
                   index=False, header=True, mode='w')
 pygame.display.quit()
 pygame.quit()
