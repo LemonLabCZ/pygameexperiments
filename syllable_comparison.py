@@ -169,6 +169,7 @@ timestamp = start_time.strftime('%Y%m%d-%H%M%S')
 log_location = os.path.join(os.getcwd(), 'logs', 'syllable_comparison')
 os.makedirs(log_location, exist_ok=True)
 log_filename = os.path.join(log_location, f'{PARTICIPANT_ID}_{timestamp}_timings.csv')
+log_settings_filename = os.path.join(log_location, f'{PARTICIPANT_ID}_{timestamp}_settings.csv')
 
 # initialize pygame and experimental window =============================
 screenSize = getScreenSize()
@@ -193,12 +194,12 @@ try:
             print(f'Pause between blocks started for {block_intertrial/1000}s')
             pygame.time.delay(block_intertrial)
             print(f'Pause ended')
-            df_timings.to_csv(log_filename, index=False, header=True, mode="w")
         timings = play_trial(iTrial, df_stimuli, intertrials, EEG_TRIGGER, COMPORT, RECALCULATE_INTER_TRIAL)
         df_timings = df_timings._append(timings, ignore_index = True)
         last_block = this_block
 finally:
     df_timings.to_csv(log_filename, index=False, header=True, mode="w")
+    df_stimuli.to_csv(log_settings_filename, index=False, header=True, mode='w')    
 
 pygame.display.quit()
 pygame.quit()

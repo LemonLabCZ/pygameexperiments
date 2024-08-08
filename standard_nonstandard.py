@@ -186,13 +186,12 @@ try:
             pygame.time.delay(block_intertrials[current_block])
             print(f'Pause between blocks ended')
             current_block += 1
-            df_timings.to_csv(f'logs/standard_nonstandard/{PARTICIPANT_ID}_{timestamp}_timings.csv', 
-                    index=False, header=True, mode='w')
         timings = play_trial(iTrial, df_stimuli, intertrials, EEG_TRIGGER, COMPORT, RECALCULATE_INTER_TRIAL)
         df_timings = df_timings._append(timings, ignore_index = True)
         last_setblock = setblock
 finally:
     df_timings.to_csv(f'logs/standard_nonstandard/{PARTICIPANT_ID}_{timestamp}_timings.csv', 
-                  index=False, header=True, mode='w')
+                  index=False, header=True, mode='w')    
+    df_stimuli.to_csv(f'logs/standard_nonstandard/{PARTICIPANT_ID}_{timestamp}_settings.csv', index=False, header=True, mode='w')    
 pygame.display.quit()
 pygame.quit()
