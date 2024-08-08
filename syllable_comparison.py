@@ -14,7 +14,7 @@ hejtmanek@praha.psu.cas.cz
 
 # =======================================================================
 # SETTINGS  NEED TO CHANGE FOR EACH PARTICIPANT
-PARTICIPANT_ID = 14 # ID of the participant as a number
+PARTICIPANT_ID = 0 # ID of the participant as a number
 TRIGGERBOX_COM = 'COM3' # COM port of the trigger box, need to check it before the experiment 
 # using the triggerBox software. It generally stays at the same port, but it can change
 MOVIE_WINDOWS_NAME = 'Amalka.mp4 - Multimediální přehrávač VLC' # This is the name of the window
@@ -25,6 +25,7 @@ MOVIE_WINDOWS_NAME = 'Amalka.mp4 - Multimediální přehrávač VLC' # This is t
 # THESE SHOULD BE THE SAME THROUGHOUT THE ENTIRE EXPERIMENTAL RUN 
 # changed only between different experiments or for testing purposes
 # that the movie is played in. It can be found out by running the list_open_windows.py script in the root
+DEBUG=False
 MOVIE_REQUIRED = True # True if you want to play a movie during the experiment. Generally
 EEG_TRIGGER = True # True if you want to send triggers to the EEG
 fNIRS_TRIGGER = True # True if you want to send triggers to the fNIRS
@@ -47,11 +48,25 @@ import pandas as pd
 from src.syllable_comparison.settings_generation import generate_settings_filename
 import os
 import threading
+import time
+import sys
 
 from src.utils import getScreenSize
 import src.core.experimental_flow as flow
 import src.syllable_comparison.experiment as experiment
 
+
+if DEBUG:
+    MOVIE_REQUIRED=False
+    EEG_TRIGGER=False
+    fNIRS_TRIGGER=False
+    if PARTICIPANT_ID > 0:
+        print("ERROR: RUNNING IN DEBUG MODE: Set DEBUG=False on line 28 for testing!!!")
+        sys.exit()
+    else:
+        print("WARNING: RUNNING IN DEBUG MODE: Set DEBUG=False on line 28 for testing!!!")
+        PARTICIPANT_ID = 1
+        time.sleep(3)
 
 if MOVIE_REQUIRED:
     import src.core.video_control as VideoControl

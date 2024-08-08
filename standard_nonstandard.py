@@ -14,7 +14,7 @@ hejtmanek@praha.psu.cas.cz
 
 # =======================================================================
 # SETTINGS  NEED TO CHANGE FOR EACH PARTICIPANT
-PARTICIPANT_ID = 11 # ID of the participant as a number
+PARTICIPANT_ID = 0 # ID of the participant as a number
 TRIGGERBOX_COM = 'COM3' # COM port of the trigger box, need to check it before the experiment 
 # using the triggerBox software. It generally stays at the same port, but it can change
 MOVIE_WINDOWS_NAME = 'Krtek.mp4 - Multimediální přehrávač VLC' # This is the name of the window
@@ -24,6 +24,7 @@ MOVIE_WINDOWS_NAME = 'Krtek.mp4 - Multimediální přehrávač VLC' # This is th
 # DEFAULT SETTINGS - DO NOT CHANGE UNLESS YOU KNOW WHAT YOU ARE DOING
 # THESE SHOULD BE THE SAME THROUGHOUT THE ENTIRE EXPERIMENTAL RUN 
 # changed only between different experiments or for testing purposes
+DEBUG=False
 EEG_TRIGGER = True # True if you want to send triggers to the EEG
 MOVIE_REQUIRED = True # True if you want to play a movie during the experiment. Generally
 fNIRS_TRIGGER = True # True if you want to send triggers to the fNIRS
@@ -46,11 +47,26 @@ import pandas as pd
 import random
 import os
 import threading
+import sys
+import time
 
 from src.experiment import stimulus, presentRating
 from src.calibrations import mouseCalibration, eyetrackerCalibration, calibrationOK
 from src.utils import initScreen, getScreenSize
 import src.core.experimental_flow as flow
+
+
+if DEBUG:
+    MOVIE_REQUIRED=False
+    EEG_TRIGGER=False
+    fNIRS_TRIGGER=False
+    if PARTICIPANT_ID > 0:
+        print("ERROR: RUNNING IN DEBUG MODE: Set DEBUG=False on line 27 for testing!!!")
+        sys.exit()
+    else:
+       PARTICIPANT_ID = 1
+       print("WARNING: RUNNING IN DEBUG MODE: Set DEBUG=False on line 27 for testing!!!")
+       time.sleep(3)
 
 
 if EEG_TRIGGER:
