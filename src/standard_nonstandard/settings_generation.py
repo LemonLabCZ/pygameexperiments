@@ -91,11 +91,13 @@ def create_experiment_trials(settings_number):
     # shifting number is 0 for 1 and 2, 1 for 3 and 4, 2 for 5 and 6 and so on
     shift_number = np.floor((settings_number - 1) / 2).astype(int)
     
+    print((settings_number//4)*10 + (settings_number % 4))
     sentence_variants = draw_stimuli(settings_number)
 
     for set_number in range(1, Parameters.n_repetitions + 1):
         conditions, block_types, block_numbers = create_set_trials(shift_number)
         triggers = [int(10 * block_number + (n % 4 + 1)) for n, block_number in enumerate(block_numbers)]
+        print(triggers)
         df_set = pd.DataFrame({'trial': range(trial, trial + len(conditions)),
                               'condition': conditions,
                               'block_number': block_numbers,
