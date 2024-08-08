@@ -72,8 +72,8 @@ def create_set_trials(shift_number):
 
 def draw_stimuli(seed):
     stimuli_all = list(range(1,98)) + list(range(99, 134))
-  
-    return random.sample(stimuli_all, 64)
+    rand = random.Random(seed)
+    return rand.sample(stimuli_all, 64)
     
 def create_experiment_trials(settings_number):
     """Generate dataframe with all trial settings
@@ -88,16 +88,15 @@ def create_experiment_trials(settings_number):
                                       "block_type", "set_number", "stimulus_number",
                                       "stimulus"])
     trial = 1
-    # shifting number is 0 for 1 and 2, 1 for 3 and 4, 2 for 5 and 6 and so on
-    shift_number = np.floor((settings_number - 1) / 2).astype(int)
+    shift_number = settings_number - 1
     
-    print((settings_number//4)*10 + (settings_number % 4))
-    sentence_variants = draw_stimuli(settings_number)
+    # The stimuli should be drawn randomly, but the stimuli content should be identical for the following pairs: 1 and 3, 2 and 4, 5 and 7, 6 and 8 etc. 
+    draw_seed = ((settings_number-1)//4)*10 + ((settings_number-1) % 2)
+    sentence_variants = draw_stimuli(draw_seed)
 
     for set_number in range(1, Parameters.n_repetitions + 1):
         conditions, block_types, block_numbers = create_set_trials(shift_number)
         triggers = [int(10 * block_number + (n % 4 + 1)) for n, block_number in enumerate(block_numbers)]
-        print(triggers)
         df_set = pd.DataFrame({'trial': range(trial, trial + len(conditions)),
                               'condition': conditions,
                               'block_number': block_numbers,
