@@ -46,6 +46,7 @@ from datetime import datetime
 import pandas as pd
 from src.syllable_comparison.settings_generation import generate_settings_filename
 import os
+import threading
 
 from src.utils import getScreenSize
 import src.core.experimental_flow as flow
@@ -62,6 +63,11 @@ if SHOULD_TRIGGER:
     COMPORT = TRIGGERBOX_COM
 else:
     COMPORT = None
+
+    
+if fNIRS_IMPLEMENTED:
+    CPOD = find_cpod()[1][0]
+    
 ## =======================================================================
 # FUNCTIONS
 def load_stimuli(file_name):
@@ -114,8 +120,8 @@ def play_trial(iTrial, df_stimuli, intertrials, should_trigger, com, recalculate
         timings['trigger_com_ended'] = flow.get_time_since_start(start_time)
         if fNIRS_IMPLEMENTED:
             timings['trigger_cpod_started'] = flow.get_time_since_start(start_time)
-            cpod = find_cpod()[1][0]
-            sendTriggerCPOD(cpod, trigger, 0.01)
+            thread = threading.Thread(target=sendTriggerCPOD,args=(CPOD, trigger, TRIGGER_DURATION))
+            thread.start()
             timings['trigger_cpod_ended'] = flow.get_time_since_start(start_time)
         timings['trigger_ended'] = flow.get_time_since_start(start_time)
     else:
