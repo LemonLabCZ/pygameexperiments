@@ -13,3 +13,4 @@ os.makedirs("settings/standard_nonstandard", exist_ok=True)
 for i in range(1, 100):
     df_trials = generator.create_experiment_trials(i)
     df_trials.to_csv(f"settings/standard_nonstandard/settings{i}.csv")
+

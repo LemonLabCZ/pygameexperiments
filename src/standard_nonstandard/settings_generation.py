@@ -107,6 +107,7 @@ def create_experiment_trials(settings_number):
         # stimulus is a f'{condition}_{stimulus_number}.wav' for each row
         df_set["stimulus"] = df_set.apply(lambda x: generate_stimulus_filename(x["condition"], x["stimulus_number"]), axis=1)
         df_trials = pd.concat([df_trials, df_set], axis=0)
+        df_trials["trigger"] = df_trials["trigger"].astype(int)
         trial += len(conditions)
 
     df_trials = df_trials.set_index("trial", drop=False)
