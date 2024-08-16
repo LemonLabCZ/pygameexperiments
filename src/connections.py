@@ -40,7 +40,7 @@ def sendTrigger(decTriggerVal, com_port, duration = 0.01, threadTimeout = 1):
             if port.inWaiting() > 0:
                 print ("0x%X"%ord(port.read(1)))
 
-    port = serial.Serial(com_port)
+    port = serial.Serial(com_port, baudrate=2000000)
     # Start the read thread
     thread = threading.Thread(target=ReadThread, args=(port,))
     thread.start()
