@@ -17,7 +17,7 @@ hejtmanek@praha.psu.cas.cz
 PARTICIPANT_ID = 0 # ID of the participant as a number
 TRIGGERBOX_COM = 'COM3' # COM port of the trigger box, need to check it before the experiment 
 # using the triggerBox software. It generally stays at the same port, but it can change
-MOVIE_WINDOWS_NAME = 'Amalka.mp4 - Multimediální přehrávač VLC' # This is the name of the window
+MOVIE_WINDOWS_NAME = 'syllable_comparison.mp4 - Multimediální přehrávač VLC' # This is the name of the window
 
 
 # =======================================================================
@@ -67,6 +67,10 @@ if DEBUG:
         print("WARNING: RUNNING IN DEBUG MODE: Set DEBUG=False on line 28 for testing!!!")
         PARTICIPANT_ID = 1
         time.sleep(3)
+
+if PARTICIPANT_ID == 0:
+    print("ERROR: Participant ID was not set")
+    sys.exit()
 
 if MOVIE_REQUIRED:
     import src.core.video_control as VideoControl
@@ -119,7 +123,7 @@ def play_trial(iTrial, df_stimuli, intertrials, should_trigger, com, recalculate
     trial_info = df_stimuli.iloc[iTrial]
     timings['trial_start'] = flow.get_time_since_start(start_time)
     sound_path = path_to_stimulus(trial_info['stimulus'])
-    print(f'Trial {iTrial}: Type: {trial_info["trial_type"]}, --- stimulus: {trial_info["stimulus_type"]}')
+    print(f'Trial {iTrial}: Type: {trial_info["trial_type"]}, --- stimulus: {trial_info["stimulus_type"]}, --- trigger: {trial_info["trigger"]} ')
     sound2play = pygame.mixer.Sound(sound_path)
     timings['sound_duration'] = sound2play.get_length()
     timings['sound_started'] = flow.get_time_since_start(start_time)

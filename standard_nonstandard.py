@@ -17,7 +17,7 @@ hejtmanek@praha.psu.cas.cz
 PARTICIPANT_ID = 0 # ID of the participant as a number
 TRIGGERBOX_COM = 'COM3' # COM port of the trigger box, need to check it before the experiment 
 # using the triggerBox software. It generally stays at the same port, but it can change
-MOVIE_WINDOWS_NAME = 'Krtek.mp4 - Multimediální přehrávač VLC' # This is the name of the window
+MOVIE_WINDOWS_NAME = 'standard_nonstandard.mp4 - Multimediální přehrávač VLC' # This is the name of the window
 
 
 # =======================================================================
@@ -68,7 +68,10 @@ if DEBUG:
        print("WARNING: RUNNING IN DEBUG MODE: Set DEBUG=False on line 27 for testing!!!")
        time.sleep(3)
 
-
+if PARTICIPANT_ID == 0:
+    print("ERROR: Participant ID was not set")
+    sys.exit()
+    
 if EEG_TRIGGER:
     from src.connections import sendTrigger
     COMPORT = TRIGGERBOX_COM
@@ -119,7 +122,7 @@ def play_trial(iTrial, df_stimuli, intertrials, should_trigger, com, recalculate
     sound_path = path_to_stimulus(stim)
     trigger = int(df_trial['trigger'])
     
-    print(f'{flow.get_time_since_start(start_time)}: Trial {iTrial}. {df_trial["block_type"]}. {df_trial["condition"]}. Stimulus {stim}')
+    print(f'{flow.get_time_since_start(start_time)}: Trial {iTrial}. {df_trial["block_type"]}. {df_trial["condition"]}. Stimulus {stim}. Trigger: {df_trial["trigger"]}')
 
     sound2play = pygame.mixer.Sound(sound_path)
     timings['sound_duration'] = sound2play.get_length()
