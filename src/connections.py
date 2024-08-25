@@ -29,7 +29,7 @@ def sendTriggerCPOD(device, value, duration):
     
     device.activate_line(lines = activeLines)
     time.sleep(duration/1000)
-    #device.clear_all_lines()    
+    device.clear_all_lines()    
 
 
 def sendTrigger(decTriggerVal, com_port, duration = 0.01, threadTimeout = 1):
