@@ -70,11 +70,26 @@ def create_set_trials(shift_number):
     return conditions, block_types, block_numbers
 
 
-def draw_stimuli(seed):
-    stimuli_all = list(range(1,98)) + list(range(99, 134))
-    rand = random.Random(seed)
-    return rand.sample(stimuli_all, 64)
+def draw_stimuli(settings_number):
+    rand = random.Random(settings_number)
+    if settings_number % 2 == 0:
+        stimuli_standard = rand.sample(range(1, 33), 32)
+        stimuli_nonstandard = rand.sample(range(33, 65), 32)
+    else:
+        stimuli_standard = rand.sample(range(33, 65), 32)
+        stimuli_nonstandard = rand.sample(range(1, 33), 32)      
+    return stimuli_standard, stimuli_nonstandard
     
+
+def select_stimuli(conditions, stimuli_standard, stimuli_nonstandard):
+    selected = []
+    for cond in conditions:
+        if cond == TrialType.Ostrava:
+            selected.append(stimuli_nonstandard.pop())
+        else:
+            selected.append(stimuli_standard.pop())
+    return selected
+
 def create_experiment_trials(settings_number):
     """Generate dataframe with all trial settings
 
@@ -90,9 +105,9 @@ def create_experiment_trials(settings_number):
     trial = 1
     shift_number = settings_number - 1
     
-    # The stimuli should be drawn randomly, but the stimuli content should be identical for the following pairs: 1 and 3, 2 and 4, 5 and 7, 6 and 8 etc. 
-    draw_seed = ((settings_number-1)//4)*10 + ((settings_number-1) % 2)
-    sentence_variants = draw_stimuli(draw_seed)
+
+    stimuli_standard, stimuli_nonstandard = draw_stimuli(settings_number)
+
 
     for set_number in range(1, Parameters.n_repetitions + 1):
         conditions, block_types, block_numbers = create_set_trials(shift_number)
@@ -102,16 +117,18 @@ def create_experiment_trials(settings_number):
                               'block_number': block_numbers,
                               'block_type': block_types,
                               'set_number': set_number,
-                              'stimulus_number': sentence_variants[trial - 1 : trial - 1 + len(conditions)],
+                              'stimulus_number': select_stimuli(conditions, stimuli_standard, stimuli_nonstandard), 
                               'trigger': triggers})
         # stimulus is a f'{condition}_{stimulus_number}.wav' for each row
         df_set["stimulus"] = df_set.apply(lambda x: generate_stimulus_filename(x["condition"], x["stimulus_number"]), axis=1)
         df_trials = pd.concat([df_trials, df_set], axis=0)
         df_trials["trigger"] = df_trials["trigger"].astype(int)
         trial += len(conditions)
+    assert len(stimuli_standard) == 0
+    assert len(stimuli_nonstandard) == 0
 
     df_trials = df_trials.set_index("trial", drop=False)
-    # Not generating intertrials at this point
+    # Not generating intertrials at this point 
     # df_trials["inter_trial"] = np.array([round(x) for x in (np.random.random(df_trials.shape[0]) * 200) + 900])
     return df_trials
 
