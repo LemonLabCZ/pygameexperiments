@@ -25,14 +25,14 @@ MOVIE_WINDOWS_NAME = 'syllable_comparison.mp4 - Multimediální přehrávač VLC
 # THESE SHOULD BE THE SAME THROUGHOUT THE ENTIRE EXPERIMENTAL RUN 
 # changed only between different experiments or for testing purposes
 # that the movie is played in. It can be found out by running the list_open_windows.py script in the root
-DEBUG=False
+DEBUG=True
 MOVIE_REQUIRED = True # True if you want to play a movie during the experiment. Generally
 EEG_TRIGGER = True # True if you want to send triggers to the EEG
 fNIRS_TRIGGER = True # True if you want to send triggers to the fNIRS
 RECALCULATE_INTER_TRIAL = True # True if you want to recalculate the intertrial time between each trial so 
 # that the total time of trial sound duration and intertrial is the same for all trials
 BLOCK_INTERTRIAL = (15000, 20000) # intertrial interval in miliseconds for the pause between blocks
-INTERTRIAL_RANGE = [400, 600]
+INTERTRIAL_RANGE = [520, 700]
 RANDOM_SEED = 111 # Seed for the intertrials
 TRIGGER_DURATION = 0.1
 
