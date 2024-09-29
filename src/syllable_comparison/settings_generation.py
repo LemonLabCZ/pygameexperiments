@@ -3,10 +3,11 @@ import numpy as np
 from enum import Enum
 import os
 from collections import defaultdict
+import random
 
 N_STANDARD_TRIALS_START = 5
-N_DEVIANT_TRIALS = 7
-N_STANDARD_TRIALS = 13
+N_DEVIANT_TRIALS = 5
+N_STANDARD_TRIALS = 15
 
 POOL = defaultdict(list)
 
@@ -22,17 +23,17 @@ class StimulusType(Enum):
     deviant = "deviant"
 
 
-def create_experiment_trials(random_seed=1111):
+def create_experiment_trials(participant_seed=1111):
     """Creates a set of 5 sets 
     """
     # TODO this should be a parameter in the set function and not a global thing
-    np.random.seed(random_seed)
+    np.random.seed(participant_seed)
     df_trials = pd.DataFrame(columns = ["trial", "set_number", "block_number",
                                         "trial_type", "stimulus_type"])
     iTrial = 1
-    for i in range(1, 6):
+    for i in range(1, 5):
         cannot_start_with = None if i == 1 else set_trial_types[-1]
-        set_block_numbers, set_trial_types, set_stimulus_types = create_set_trials(i, cannot_start_with=cannot_start_with)
+        set_block_numbers, set_trial_types, set_stimulus_types = create_set_trials(i, participant_seed, cannot_start_with=cannot_start_with)
         set_triggers = [int(10*(list(TrialType).index(trial_type) + 1) + list(StimulusType).index(stim_type)) for trial_type, stim_type in zip(set_trial_types, set_stimulus_types)]
         df_set = pd.DataFrame({'trial': range(iTrial, iTrial + len(set_trial_types)),
                                'set_number': i,
@@ -47,7 +48,7 @@ def create_experiment_trials(random_seed=1111):
     return df_trials
 
 
-def create_set_trials(set_number, cannot_start_with=None):
+def create_set_trials(set_number, participant_seed, cannot_start_with=None):
     """Creates a set of four blocks
     """
     set_trial_types = []
@@ -65,7 +66,8 @@ def create_set_trials(set_number, cannot_start_with=None):
     for block in block_order:
         # block seed is set number + index of the trial type. This ensures that language short
         # in the first set will always have the same order of trials
-        block_seed = set_number + list(TrialType).index(block)
+        block_seed = set_number + list(TrialType).index(block) + participant_seed
+        # change: we want the order to be different for each child and every block so we use a different seed for every child and every block
         trial_types, stimulus_types = create_block_trials(block, block_seed)
     #    POOL[block].append(stimulus_types)
         set_trial_types.extend(trial_types)
@@ -111,11 +113,12 @@ def insert_deviants(trial_sequence, trial_type, seed):
     Args:
         trial_sequence (list of StimulusType): A list of stimulus types
     """
-    pauses = [1,1,2,2,3,3]
-    local_random = np.random.default_rng(seed)
+    # fixed number of standards between deviant - 2, 3, 4 and 5, shuffled randomly
+    pauses = [2,3,4,5]
+    rand = random.Random(seed)
     for i in range(100):
         # Shuffle until you find such a placement where two adjacent pauses between deviants are not the same length
-        pauses = local_random.permutation(pauses)
+        pauses = rand.sample(pauses,len(pauses))
         # Check the POOL to see if we used this order for this block type before and keep suffling if we did (we do not want the same participant to hear the identical sequence)
         if no_doubles(pauses) and str(pauses) not in POOL[trial_type]:
             break
