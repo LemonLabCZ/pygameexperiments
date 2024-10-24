@@ -8,7 +8,7 @@ df_trials = generator.create_experiment_trials()
 df_trials.head()
 df_trials.to_csv(generator.generate_settings_filename(1))
 
-for i in range(1, 100):
+for i in range(1, 400):
     generator.POOL = defaultdict(list)
     df_trials = generator.create_experiment_trials(i)
     df_trials.to_csv(generator.generate_settings_filename(i))
