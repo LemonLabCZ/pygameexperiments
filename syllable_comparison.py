@@ -219,6 +219,6 @@ try:
 finally:
     df_timings.to_csv(log_filename, index=False, header=True, mode="w")
     df_stimuli.to_csv(log_settings_filename, index=False, header=True, mode='w')    
-
+print("Experiment has ended.")
 pygame.display.quit()
 pygame.quit()

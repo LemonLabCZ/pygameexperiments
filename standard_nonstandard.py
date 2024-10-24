@@ -212,5 +212,6 @@ finally:
     df_timings.to_csv(f'logs/standard_nonstandard/{PARTICIPANT_ID}_{timestamp}_timings.csv', 
                   index=False, header=True, mode='w')    
     df_stimuli.to_csv(f'logs/standard_nonstandard/{PARTICIPANT_ID}_{timestamp}_settings.csv', index=False, header=True, mode='w')    
+print("Experiment has ended.")
 pygame.display.quit()
 pygame.quit()
