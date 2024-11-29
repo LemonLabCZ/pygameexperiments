@@ -1,0 +1,13 @@
+import os
+from src.neuro3_syllables import settings_generation as generator
+
+os.makedirs(generator.settings_folder(), exist_ok=True)
+
+df_trials = generator.create_experiment_trials()
+df_trials.head()
+df_trials.to_csv(generator.generate_settings_filename(1))
+
+for i in range(1, 400):
+    generator.restart()
+    df_trials = generator.create_experiment_trials(i)
+    df_trials.to_csv(generator.generate_settings_filename(i))
