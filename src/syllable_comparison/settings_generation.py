@@ -24,7 +24,7 @@ class StimulusType(Enum):
 
 
 def create_experiment_trials(participant_seed=1111):
-    """Creates a set of 5 sets 
+    """Creates a set of 4 sets 
     """
     # TODO this should be a parameter in the set function and not a global thing
     np.random.seed(participant_seed)
@@ -94,18 +94,6 @@ def create_block_trials(trial_type, seed, block=1):
     return trial_types, stimulus_types
 
 
-def no_doubles(pauses):
-    """
-    Checks that two consecutive pauses between deviants are not the same length (so the patricipant does not anticipate the deviant sound)
-
-    Args:
-        (list of int): A list of standard counts between deviants
-    """
-    for i in range(len(pauses)-1):
-        if pauses[i] == pauses[i+1]:
-            return False
-    return True
-
 def insert_deviants(trial_sequence, trial_type, seed):
     """
     Inserts the correct number of deviants with given standard pausses  into a list of standard stimli
@@ -114,13 +102,12 @@ def insert_deviants(trial_sequence, trial_type, seed):
         trial_sequence (list of StimulusType): A list of stimulus types
     """
     # fixed number of standards between deviant - 2, 3, 4 and 5, shuffled randomly
-    pauses = [2,3,4,5]
+    pauses = [2, 3, 4, 5]
     rand = random.Random(seed)
     for i in range(100):
-        # Shuffle until you find such a placement where two adjacent pauses between deviants are not the same length
-        pauses = rand.sample(pauses,len(pauses))
+        pauses = rand.sample(pauses, len(pauses))
         # Check the POOL to see if we used this order for this block type before and keep suffling if we did (we do not want the same participant to hear the identical sequence)
-        if no_doubles(pauses) and str(pauses) not in POOL[trial_type]:
+        if str(pauses) not in POOL[trial_type]:
             break
     if i == 100:
         return None
@@ -171,3 +158,8 @@ def settings_folder():
 def generate_settings_filename(participant_id):
     stimuli_filename = os.path.join(settings_folder(), f'settings{participant_id}.csv')
     return stimuli_filename
+
+def restart():
+    # restart the pool with used deviant orders 
+    global POOL
+    POOL = defaultdict(list)
