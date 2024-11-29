@@ -17,7 +17,7 @@ hejtmanek@praha.psu.cas.cz
 PARTICIPANT_ID = 0 # ID of the participant as a number
 TRIGGERBOX_COM = 'COM3' # COM port of the trigger box, need to check it before the experiment 
 # using the triggerBox software. It generally stays at the same port, but it can change
-MOVIE_WINDOWS_NAME = 'syllable_comparison.mp4 - Multimediální přehrávač VLC' # This is the name of the window
+MOVIE_WINDOWS_NAME = 'neuro3_syllables.mp4 - Multimediální přehrávač VLC' # This is the name of the window
 
 
 # =======================================================================
@@ -45,7 +45,7 @@ import pygame
 from pygame.locals import *
 from datetime import datetime
 import pandas as pd
-from src.syllable_comparison.settings_generation import generate_settings_filename
+from src.neuro3_syllables.settings_generation import generate_settings_filename
 import os
 import threading
 import time
@@ -53,7 +53,7 @@ import sys
 
 from src.utils import getScreenSize
 import src.core.experimental_flow as flow
-import src.syllable_comparison.experiment as experiment
+import src.neuro3_syllables.experiment as experiment
 
 
 if DEBUG:
@@ -99,7 +99,7 @@ def load_stimuli(file_name):
 
 
 def path_to_stimulus(filename):
-    return os.path.join(os.getcwd(), 'stimuli', 'syllable_comparison', filename)
+    return os.path.join(os.getcwd(), 'stimuli', 'neuro3_syllables', filename)
 
 
 def play_trial(iTrial, df_stimuli, intertrials, should_trigger, com, recalculate_inter_trial = False):
@@ -185,7 +185,7 @@ df_timings = flow.prepare_log_table(add_fNIRS=fNIRS_TRIGGER)
 timestamp = start_time.strftime('%Y%m%d-%H%M%S')
 
 # Experimental loop -----------------------
-log_location = os.path.join(os.getcwd(), 'logs', 'syllable_comparison')
+log_location = os.path.join(os.getcwd(), 'logs', 'neuro3_syllables')
 os.makedirs(log_location, exist_ok=True)
 log_filename = os.path.join(log_location, f'{PARTICIPANT_ID}_{timestamp}_timings.csv')
 log_settings_filename = os.path.join(log_location, f'{PARTICIPANT_ID}_{timestamp}_settings.csv')
