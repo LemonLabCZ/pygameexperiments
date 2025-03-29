@@ -1,12 +1,5 @@
 """
-Base code provided by
-(C) Torsten Wüstenberg 2023
-torsten.wuestenberg@psychologie.uni-heidelberg.de
-Core Facility for Neuroscience of Self-Regulation (CNSR)
-1st Version 0.9 2023-03-03
-Final Version 1.0 2023-03-13
-
-Coded by
+  Coded by
 Lukas Hejtmanek
 institute of psychology, Czech Academy of Sciences
 hejtmanek@praha.psu.cas.cz
@@ -17,26 +10,26 @@ hejtmanek@praha.psu.cas.cz
 PARTICIPANT_ID = 0 # ID of the participant as a number
 TRIGGERBOX_COM = 'COM3' # COM port of the trigger box, need to check it before the experiment 
 # using the triggerBox software. It generally stays at the same port, but it can change
-MOVIE_WINDOWS_NAME = 'standard_nonstandard.mp4 - Multimediální přehrávač VLC' # This is the name of the window
-
 
 # =======================================================================
 # DEFAULT SETTINGS - DO NOT CHANGE UNLESS YOU KNOW WHAT YOU ARE DOING
 # THESE SHOULD BE THE SAME THROUGHOUT THE ENTIRE EXPERIMENTAL RUN 
 # changed only between different experiments or for testing purposes
+
 DEBUG=False
 EEG_TRIGGER = True # True if you want to send triggers to the EEG
-MOVIE_REQUIRED = True # True if you want to play a movie during the experiment. Generally
 fNIRS_TRIGGER = True # True if you want to send triggers to the fNIRS
-# set to false during debugging
 RECALCULATE_INTER_TRIAL = True # True if you want to compensate for potential trigger delays caused by the serial communication
-BLOCK_INTERTRIAL = (15000, 20000) # intertrial interval in milliseconds for the pause between blocks
-INTERTRIAL_RANGE = [900, 1100] # If list(2) then randomizes between the two values. If a single value, then keeps it at that value
-RANDOM_SEED = 111 # Seed for the intertrials
-TRIGGER_DURATION = 0.1
 
 
-# IMPORTS =======================================================================
+MAX_INTERTRIAL_INTERVAL = 15
+MIN_INTERTRIAL_INTERVAL = 3
+MAX_STIMULUS_ANSWER_INTERVAL = 0.5
+MIN_STIMULUS_ANSWER_INTERVAL = 0.4
+
+N_TRIALS = 140
+RANDOM_SEED = 42 # DO NOT CHANGE THIS WHEN RUNNING THE EXPERIMENT
+# =======================================================================
 
 import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
@@ -48,53 +41,53 @@ import random
 import os
 import threading
 import sys
-import time
 
 from src.utils import getScreenSize
 import src.core.experimental_flow as flow
+import src.neuro3_syllables.experiment as experiment
+import src.congruent_incongruent.generator as generator
 
-
+## Setup Debugging
 if DEBUG:
-    MOVIE_REQUIRED=False
     EEG_TRIGGER=False
     fNIRS_TRIGGER=False
     if PARTICIPANT_ID > 0:
-        print("ERROR: RUNNING IN DEBUG MODE: Set DEBUG=False on line 27 for testing!!!")
-        sys.exit()
-    else:
-       PARTICIPANT_ID = 1
-       print("WARNING: RUNNING IN DEBUG MODE: Set DEBUG=False on line 27 for testing!!!")
-       time.sleep(3)
+        PARTICIPANT_ID = 0
+        print("WARNING: RUNNING IN DEBUG MODE")
 
-if PARTICIPANT_ID == 0:
+
+if PARTICIPANT_ID == 0 and not DEBUG:
     print("ERROR: Participant ID was not set")
     sys.exit()
-    
+
 if EEG_TRIGGER:
     from src.connections import sendTrigger
     COMPORT = TRIGGERBOX_COM
 else:
     COMPORT = None
 
-
-if MOVIE_REQUIRED:
-    import src.core.video_control as VideoControl
-    
 if fNIRS_TRIGGER:
     from src.connections import sendTriggerCPOD, find_cpod
     CPOD = find_cpod()[1][0]
-## =======================================================================
-# FUNCTIONS
-def load_stimuli(file_name):
-    pth = file_name
-    print(f'Loading settings from {pth}')
-    out = pd.read_csv(pth)
-    print(f'# trial stimuli: {len(out)}')
-    return out
+    if not CPOD:
+        print("ERROR: No CPOD found and required for fNIRS triggering")
+        sys.exit()
 
+
+##  Preparation of the experiment
+## open a window with pygame
+
+
+
+
+intertrial_intervals = generator.generate_intertrial_intervals(N_TRIALS, MIN_INTERTRIAL_INTERVAL,
+                                                              MAX_INTERTRIAL_INTERVAL, seed=RANDOM_SEED)
+
+stimulus_answer_intervals = generator.generate_stimulus_answer_intervals(N_TRIALS, MIN_STIMULUS_ANSWER_INTERVAL,
+                                                                         MAX_STIMULUS_ANSWER_INTERVAL, seed=RANDOM_SEED)
 
 def path_to_stimulus(filename):
-    return os.path.join(os.getcwd(), 'stimuli', 'standard_nonstandard', filename)
+    return os.path.join(os.getcwd(), 'stimuli', 'congruent_incongruent', filename)
 
 
 def play_trial(iTrial, df_stimuli, intertrials, should_trigger, com, recalculate_inter_trial = False):
@@ -154,62 +147,7 @@ def play_trial(iTrial, df_stimuli, intertrials, should_trigger, com, recalculate
     timings['real_trial_duration'] = timings['sound_ended'] - timings['trial_start']
     return timings
 
-# Loading settings =======================================================
-stimuli_filename = os.path.join(os.getcwd(), 'settings', 'standard_nonstandard',
-                                f'settings{PARTICIPANT_ID}.csv')
-df_stimuli = load_stimuli(stimuli_filename)
 
-# get number of unique values in the set columna nd the block column
-n_trials = len(df_stimuli['block_number'])
-n_set = len(df_stimuli['set_number'].unique())
-n_block = len(df_stimuli['block_number'].unique())
-n_blocks = n_set * n_block
-
-random.seed(RANDOM_SEED) # We want all participants to have the same intertrials
-block_intertrials = random.choices(range(BLOCK_INTERTRIAL[0], BLOCK_INTERTRIAL[1]), k=n_blocks)
-
-# Randomizes intertrial times or keeps it at a fixed value if the length is one
-if len(INTERTRIAL_RANGE) == 1:
-    intertrials = [INTERTRIAL_RANGE[0]] * n_trials
-if len(INTERTRIAL_RANGE) == 2:
-    intertrials = random.choices(range(INTERTRIAL_RANGE[0], INTERTRIAL_RANGE[1]), k=n_trials)
-
-# initialize pygame and experimental window =============================
-screenSize = getScreenSize()
-screen = pygame.display.set_mode(screenSize, pygame.HIDDEN)
-pygame.display.set_caption('')
-pygame.display.update()
-pygame.mixer.init()
-
-# Video Control =======================================================
-if MOVIE_REQUIRED:
-    VideoControl.start_playing_video(MOVIE_WINDOWS_NAME)
-
-# Experiment flow =======================================================
-start_time = datetime.now()
-last_datetime = start_time
-
-# Experimental loop -----------------------
-try:
-    timestamp = start_time.strftime('%Y%m%d-%H%M%S')
-    df_timings = flow.prepare_log_table(add_fNIRS=fNIRS_TRIGGER)
-
-    last_setblock = df_stimuli['set_number'][0]+df_stimuli['block_number'][0]
-    current_block = 0
-    for iTrial in range(0, df_stimuli.shape[0]):
-        setblock = df_stimuli['set_number'][iTrial]+df_stimuli['block_number'][iTrial]
-        if(last_setblock != setblock):
-            print(f'Pause between blocks started for {block_intertrials[current_block]/1000} seconds')
-            pygame.time.delay(block_intertrials[current_block])
-            print(f'Pause between blocks ended')
-            current_block += 1
-        timings = play_trial(iTrial, df_stimuli, intertrials, EEG_TRIGGER, COMPORT, RECALCULATE_INTER_TRIAL)
-        df_timings = df_timings._append(timings, ignore_index = True)
-        last_setblock = setblock
-finally:
-    df_timings.to_csv(f'logs/standard_nonstandard/{PARTICIPANT_ID}_{timestamp}_timings.csv', 
-                  index=False, header=True, mode='w')    
-    df_stimuli.to_csv(f'logs/standard_nonstandard/{PARTICIPANT_ID}_{timestamp}_settings.csv', index=False, header=True, mode='w')    
-print("Experiment has ended.")
-pygame.display.quit()
-pygame.quit()
+def question_phase(iTrial, df_stimul):
+    # using pygame pose a quesiton
+    # wait for the answer

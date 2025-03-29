@@ -29,8 +29,6 @@ def sendTrigger(decTriggerVal, com_port, duration = 0.01, threadTimeout = 1):
     port.close()
 
 
-
-
 # Test 1:
 sendTrigger(5, "COM3", 0.1)
 
