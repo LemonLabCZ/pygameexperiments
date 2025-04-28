@@ -1,5 +1,27 @@
 import random
 import numpy as np
+import pandas as pd
+
+def generate_stimulus_answer_pairs(seed=None):
+  """This is a function that generates a list of stimulus answer pairs.
+  trial types are four different types, either initial or final. 
+  The stimulus is a number between 1 and 35. The trials are structured in a way that the stimulus 1
+  should come with all 4 different conditions ((congruent, congruent), 
+  (congruent, incongruent), (incongruent, congruent), (incongruent, incongruent)).
+  """
+  if seed is not None:
+    random.seed(seed)
+  df_possible_stimuli = pd.DataFrame(columns=['stimulus', 'question', 'answer'], 
+                                     index = range(140))
+  df_possible_stimuli['stimulus'] = np.tile(np.arange(1, 36), 4)
+  df_possible_stimuli['question'] = np.concatenate([np.tile(['initial'], 70), 
+                                                   np.tile(['final'], 70)])
+  df_possible_stimuli['answer'] = np.concatenate([np.tile(['initial'], 35), 
+                                                  np.tile(['final'], 35), 
+                                                  np.tile(['initial'], 35), 
+                                                  np.tile(['final'], 35)])
+
+  return df_possible_stimuli.sample(n = 140, replace=False).reset_index(drop=True)
 
 
 def generate_intertrial_intervals(n_trials, min_intertrial_interval, 
@@ -28,40 +50,17 @@ def generate_intertrial_intervals(n_trials, min_intertrial_interval,
   return intertrial_intervals
 
 
-def generate_intertrial_intervals_torsten(n_trials, intertrials, weights, seed=None):
+def generate_intertrial_intervals_torsten(seed=None):
   """This is a function that generates a list of intertrial intervals.
   The interprials should follow an exponential distribution between min and max in seconds.
 
   Args:
-      n_trials (int): Number of trials
-      intertrials (list): List of intertrial intervals
-      weights (list): List of weights for the intertrial intervals
       seed (int, optional): Seed for the random number generator. Defaults to None.
   """
   if seed is not None:
     random.seed(seed)
-
-  return np.random.choice(intertrials, p=weights, size=n_trials).tolist()
-
-
-def generate_stimulus_answer_intervals(n_trials, min_interval, max_interval, seed=None):
-  """This is a function that generates a list of stimulus answer intervals.
-  The intervals should follow a simple uniform distribution between min and max in seconds.
-
-  Args:
-      n_trials (int): Number of trials
-      min_interval (float): Minimum interval in seconds
-      max_interval (float): Maximum interval in seconds
-      seed (int, optional): Seed for the random number generator. Defaults to None.
-  """
-  stimulus_answer_intervals = []
-
-  if seed is not None:
-    random.seed(seed)
-  possible_intervals = np.linspace(min_interval, max_interval, 50)
-  for i in range(n_trials):
-    stimulus_answer_intervals.append(np.random.choice(possible_intervals))
-  return stimulus_answer_intervals
+  intertrials = [2] * 37 + [4] * 19 + [8] * 10 + [16] * 3
+  return np.random.choice(intertrials, 69, replace=False).tolist()
 
 
 def generate_potential_question(trial_index=None, seed=None):
@@ -90,10 +89,8 @@ def generate_question_trials(seed=None):
   """
   if seed is not None:
     random.seed(seed)
-  # create and array repeat 2*5, 7*5, 3*8, 5*8 and 4 * 9
-  # and shuffle it
   question_trials = [2] * 5 + [3] * 8 + [4] * 9 + [5] * 8 + [6] * 5
   random.shuffle(question_trials)
+  question_trials = np.cumsum(question_trials)
   return question_trials
-  # insert trial reandomly every 2, 3 or 4 trials and make sure that there are 35 trials in total
   

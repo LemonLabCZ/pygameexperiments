@@ -136,11 +136,8 @@ def play_trial(iTrial, df_stimuli, intertrials, should_trigger, com, recalculate
     timings['real_trial_duration'] = timings['sound_ended'] - timings['trial_start']
     return timings
 
-
 def question_phase(screen, iTrial, df_stimul):
-    # using pygame pose a quesiton
     # wait for the answer listening for either A or N (A for yes, N for no)
-    # show the question on the screen
     pygame.mouse.set_visible(False)
     screen.fill((0, 0, 0))
     question = generator.generate_potential_question(iTrial)
@@ -155,11 +152,12 @@ def question_phase(screen, iTrial, df_stimul):
         answer = 'unknown'
     # save the answer to the dataframe
     return answer
-    
+
 # Experiment flow =======================================================
 start_time = datetime.now()
 last_datetime = start_time
-df_stimuli = generator.generate_stimuli(N_TRIALS)
+intertrials = generator.generate_intertrial_intervals_torsten(seed=None)
+df_stimuli = generator.generate_stimulus_answer_pairs(seed=None)
 question_trials = generator.generate_question_trials(seed=None)
 log_filename = os.path.join(os.getcwd(), 'logs', 'standard_nonstandard',
                         f'{PARTICIPANT_ID}_{start_time.strftime("%Y%m%d-%H%M%S")}_settings.csv')
