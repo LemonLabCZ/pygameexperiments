@@ -2,7 +2,8 @@ import random
 import numpy as np
 
 
-def generate_intertrial_intervals(n_trials, min_intertrial_interval, max_intertrial_interval, seed=None):
+def generate_intertrial_intervals(n_trials, min_intertrial_interval, 
+                                  max_intertrial_interval, seed=None):
   """This is a function that generates a list of intertrial intervals.
   The interprials should follow an exponential distribution between min and max in seconds.
 
@@ -57,12 +58,9 @@ def generate_stimulus_answer_intervals(n_trials, min_interval, max_interval, see
 
   if seed is not None:
     random.seed(seed)
-
   possible_intervals = np.linspace(min_interval, max_interval, 50)
-
   for i in range(n_trials):
     stimulus_answer_intervals.append(np.random.choice(possible_intervals))
-
   return stimulus_answer_intervals
 
 
@@ -80,3 +78,22 @@ def generate_potential_question(trial_index=None, seed=None):
                         "Říkal odpověď žena?", "Byla odpověď v minulém čase?",
                         "Byla odpověď v přítomném čase?"]
   return random.choice(potential_questions)
+
+
+def generate_question_trials(seed=None):
+  """This is a function that generates a list of question trials.
+  the question trials come every 2 3 or 4 trials. There should be 35 trials in total
+
+  Args:
+      n_trials (int): Number of trials
+      seed (int, optional): Seed for the random number generator. Defaults to None.
+  """
+  if seed is not None:
+    random.seed(seed)
+  # create and array repeat 2*5, 7*5, 3*8, 5*8 and 4 * 9
+  # and shuffle it
+  question_trials = [2] * 5 + [3] * 8 + [4] * 9 + [5] * 8 + [6] * 5
+  random.shuffle(question_trials)
+  return question_trials
+  # insert trial reandomly every 2, 3 or 4 trials and make sure that there are 35 trials in total
+  

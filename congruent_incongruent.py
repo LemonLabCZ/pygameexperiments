@@ -35,10 +35,11 @@ import pandas as pd
 import os
 import threading
 import sys
+from datetime import datetime
 
 from src.utils import getScreenSize
 import src.core.experimental_flow as flow
-import src.neuro3_syllables.experiment as experiment
+import src.congruent_incongruent.experiment as experiment
 import src.congruent_incongruent.generator as generator
 
 ## Setup Debugging
@@ -71,17 +72,11 @@ if fNIRS_TRIGGER:
 ##  Preparation of the experiment
 ## open a window with pygame
 
-
-
-
-intertrial_intervals = generator.generate_intertrial_intervals(N_TRIALS, MIN_INTERTRIAL_INTERVAL,
-                                                              MAX_INTERTRIAL_INTERVAL, seed=RANDOM_SEED)
+intertrial_intervals = generator.generate_intertrial_intervals(N_TRIALS, 1, 2, seed=RANDOM_SEED)
 
 stimulus_answer_intervals = generator.generate_stimulus_answer_intervals(N_TRIALS, MIN_STIMULUS_ANSWER_INTERVAL,
                                                                          MAX_STIMULUS_ANSWER_INTERVAL, seed=RANDOM_SEED)
 
-def path_to_stimulus(filename):
-    return os.path.join(os.getcwd(), 'stimuli', 'congruent_incongruent', filename)
 
 
 def play_trial(iTrial, df_stimuli, intertrials, should_trigger, com, recalculate_inter_trial = False):
@@ -104,7 +99,7 @@ def play_trial(iTrial, df_stimuli, intertrials, should_trigger, com, recalculate
     
     df_trial = df_stimuli.iloc[iTrial]
     stim = df_trial['stimulus']
-    sound_path = path_to_stimulus(stim)
+    # sound_path = experiment.path_to_stimulus(stim)
     trigger = int(df_trial['trigger'])
     
     print(f'{flow.get_time_since_start(start_time)}: Trial {iTrial}. {df_trial["block_type"]}. {df_trial["condition"]}. Stimulus {stim}. Trigger: {df_trial["trigger"]}')
@@ -142,6 +137,46 @@ def play_trial(iTrial, df_stimuli, intertrials, should_trigger, com, recalculate
     return timings
 
 
-def question_phase(iTrial, df_stimul):
+def question_phase(screen, iTrial, df_stimul):
     # using pygame pose a quesiton
-    # wait for the answer
+    # wait for the answer listening for either A or N (A for yes, N for no)
+    # show the question on the screen
+    pygame.mouse.set_visible(False)
+    screen.fill((0, 0, 0))
+    question = generator.generate_potential_question(iTrial)
+    experiment.show_text(screen, question, 50, (255, 255, 255), *getScreenSize())
+    pygame.display.update()
+    answer = experiment.wait_for_answer(screen)
+    if answer == pygame.K_a:
+        answer = 'yes'
+    elif answer == pygame.K_n:
+        answer = 'no'
+    else:
+        answer = 'unknown'
+    # save the answer to the dataframe
+    return answer
+    
+# Experiment flow =======================================================
+start_time = datetime.now()
+last_datetime = start_time
+df_stimuli = generator.generate_stimuli(N_TRIALS)
+question_trials = generator.generate_question_trials(seed=None)
+log_filename = os.path.join(os.getcwd(), 'logs', 'standard_nonstandard',
+                        f'{PARTICIPANT_ID}_{start_time.strftime("%Y%m%d-%H%M%S")}_settings.csv')
+# Experimental loop -----------------------
+try:
+    df_timings = flow.prepare_log_table(add_fNIRS=fNIRS_TRIGGER) #$ FIX THIS
+    df_timings.to_csv(log_filename, index=False, header=True, mode='w')
+    for iTrial in range(0, df_stimuli.shape[0]):
+        timings = play_trial(iTrial, df_stimuli, intertrials, EEG_TRIGGER, COMPORT, RECALCULATE_INTER_TRIAL)
+        df_timings = df_timings._append(timings, ignore_index = True)
+        if iTrial in question_trials:
+            answer = question_phase(screen, iTrial, df_stimuli)
+            df_timings.at[iTrial, 'answer'] = answer
+            df_timings.to_csv(log_filename, index=False, header=True, mode='w')
+finally:
+    df_timings.to_csv(log_filename, index=False, header=True, mode='w')
+    df_stimuli.to_csv(f'logs/standard_nonstandard/{PARTICIPANT_ID}_{timestamp}_settings.csv', index=False, header=True, mode='w')    
+print("Experiment has ended.")
+pygame.display.quit()
+pygame.quit()

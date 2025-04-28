@@ -1,4 +1,5 @@
 import pygame
+import os
 
 
 def initialize_pygame():
@@ -19,8 +20,22 @@ def show_text(screen, text, font_size, color, x, y):
     pygame.display.update()
 
 
+def path_to_stimulus(part, type, id):
+    """
+    Filename is in a stimuli/congturent_incongruent folder named
+    <part>_<id>_<type>.wav where id is id with 0 padding on the left to 2 digits, part is 
+    either q for question or a for answer, and type is either initial or final
+    """
+    return os.path.join(os.getcwd(), 'stimuli', 'congruent_incongruent', f'{part}_{str(id).zfill(2)}_{type}.wav')
+
+
 def wait_for_answer(screen):
     while True:
         for event in pygame.event.get():
             if event.type == pygame.KEYDOWN:
-                return event.key
+                if event.key == pygame.K_a or event.key == pygame.K_n:
+                    return event.key
+                elif event.key == pygame.K_ESCAPE:
+                    pygame.quit()
+                    exit()
+        pygame.time.delay(10)

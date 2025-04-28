@@ -21,7 +21,6 @@ def check_events():
 def game_quit():
     sys.exit()
 
-
 def update():
     check_for_key_press()
 
