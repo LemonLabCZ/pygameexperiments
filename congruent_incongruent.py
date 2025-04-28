@@ -19,11 +19,7 @@ TRIGGERBOX_COM = 'COM3' # COM port of the trigger box, need to check it before t
 DEBUG=False
 EEG_TRIGGER = True # True if you want to send triggers to the EEG
 fNIRS_TRIGGER = True # True if you want to send triggers to the fNIRS
-RECALCULATE_INTER_TRIAL = True # True if you want to compensate for potential trigger delays caused by the serial communication
 
-
-MAX_INTERTRIAL_INTERVAL = 15
-MIN_INTERTRIAL_INTERVAL = 3
 MAX_STIMULUS_ANSWER_INTERVAL = 0.5
 MIN_STIMULUS_ANSWER_INTERVAL = 0.4
 
@@ -35,9 +31,7 @@ import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
 import pygame
 from pygame.locals import *
-from datetime import datetime
 import pandas as pd
-import random
 import os
 import threading
 import sys
