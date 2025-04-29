@@ -32,7 +32,7 @@ def sendTriggerCPOD(device, value, duration):
     device.clear_all_lines()    
 
 
-def sendTrigger(decTriggerVal, com_port, duration = 0.01, threadTimeout = 1):
+def sendTrigger(decTriggerVal, com_port, duration = 0.01, threadTimeout = 1, delay = None):
     Connected = True
     hexTriggerVal = int(hex(decTriggerVal), 16)
     def ReadThread(port):
@@ -41,10 +41,10 @@ def sendTrigger(decTriggerVal, com_port, duration = 0.01, threadTimeout = 1):
                 print ("0x%X"%ord(port.read(1)))
 
     port = serial.Serial(com_port, baudrate=2000000)
-    # Start the read thread
     thread = threading.Thread(target=ReadThread, args=(port,))
     thread.start()
-    # Set the port to an initial state
+    if delay is not None and delay > 0:
+        time.sleep(delay)
     port.write([hexTriggerVal])
     time.sleep(duration)
     port.write([0x00])
