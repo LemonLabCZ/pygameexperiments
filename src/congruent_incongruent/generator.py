@@ -1,6 +1,7 @@
 import random
 import numpy as np
 import pandas as pd
+from typing import Optional
 
 def generate_stimulus_answer_pairs(seed=None):
   """This is a function that generates a list of stimulus answer pairs.
@@ -20,8 +21,105 @@ def generate_stimulus_answer_pairs(seed=None):
                                                   np.tile(['final'], 35), 
                                                   np.tile(['initial'], 35), 
                                                   np.tile(['final'], 35)])
+  df_possible_stimuli['condition'] = df_possible_stimuli['question'] + '-' + df_possible_stimuli['answer']
+  shuffled_stimuli = shuffle_with_constraints_greedy(df_possible_stimuli, max_restarts=10)
+  if shuffled_stimuli is None:
+    raise ValueError("Could not generate a valid stimulus-answer pair.")
+  df_possible_stimuli = shuffled_stimuli
+  return df_possible_stimuli
+  
 
-  return df_possible_stimuli.sample(n = 140, replace=False).reset_index(drop=True)
+def check_constraints(df: pd.DataFrame) -> bool:
+    """
+    Checks if a DataFrame satisfies the constraints:
+    - No two consecutive rows have the same 'stimulus'.
+    - No two consecutive rows have the same 'condition'.
+
+    Args:
+        df (pd.DataFrame): The DataFrame to check.
+
+    Returns:
+        bool: True if constraints are satisfied, False otherwise.
+    """
+    # Iterate through the DataFrame starting from the second row
+    for i in range(1, len(df)):
+        # Check if the current ID is the same as the previous one
+        if df.iloc[i]['stimulus'] == df.iloc[i-1]['stimulus']:
+            return False
+        # Check if the current Condition is the same as the previous one
+        if df.iloc[i]['condition'] == df.iloc[i-1]['condition']:
+            return False
+    # If the loop completes without returning False, constraints are met
+    return True
+
+
+def shuffle_with_constraints_greedy(df: pd.DataFrame, max_restarts: int = 10) -> Optional[pd.DataFrame]:
+    """
+    Attempts to shuffle the rows of a DataFrame using a greedy algorithm,
+    ensuring that no two consecutive rows have the same 'ID' or 'Condition'.
+
+    Args:
+        df (pd.DataFrame): The input DataFrame with 'ID' and 'Condition' columns.
+        max_restarts (int): The maximum number of times to restart the greedy
+                           process if it gets stuck.
+
+    Returns:
+        Optional[pd.DataFrame]: The shuffled DataFrame satisfying the constraints,
+                                or None if a valid shuffle wasn't found within max_restarts.
+    """
+    if not {'stimulus', 'condition'}.issubset(df.columns):
+        raise ValueError("DataFrame must contain 'stimulus' and 'condition' columns.")
+
+    n_rows = len(df)
+    if n_rows <= 1:
+        return df.copy() # No shuffling needed
+
+    original_indices = list(df.index)
+    
+    for attempt in range(max_restarts):
+        print(f"Greedy Shuffle Attempt: {attempt + 1}/{max_restarts}")
+        
+        # Make a copy of available indices for this attempt
+        available_indices = original_indices[:]
+        random.shuffle(available_indices) # Shuffle available indices
+
+        # Start with a random row
+        first_index = available_indices.pop(0)
+        result_indices = [first_index]
+        
+        stuck = False
+        while len(result_indices) < n_rows:
+            last_index = result_indices[-1]
+            last_row = df.loc[last_index]
+            last_id = last_row['stimulus']
+            last_condition = last_row['condition']
+
+            # Find valid next candidates from the remaining available indices
+            valid_next_indices = [
+                idx for idx in available_indices
+                if df.loc[idx]['stimulus'] != last_id and df.loc[idx]['condition'] != last_condition
+            ]
+
+            if not valid_next_indices:
+                # Greedy approach got stuck, break and restart
+                print(f"  Stuck at step {len(result_indices)}. No valid next row found.")
+                stuck = True
+                break
+
+            # Choose a random valid next index
+            next_index = random.choice(valid_next_indices)
+            result_indices.append(next_index)
+            available_indices.remove(next_index) # Remove chosen index from available pool
+
+        if not stuck:
+            # Successfully placed all rows
+            print("Successfully found a valid greedy shuffle.")
+            shuffled_df = df.loc[result_indices].reset_index(drop=True)
+            return shuffled_df
+
+    # If all restart attempts failed
+    print(f"Warning: Could not find a valid shuffle satisfying the constraints after {max_restarts} restarts.")
+    return None
 
 
 def generate_intertrial_intervals(n_trials, min_intertrial_interval, 
@@ -63,7 +161,7 @@ def generate_intertrial_intervals_torsten(seed=None):
   return np.random.choice(intertrials, 69, replace=False).tolist()
 
 
-def generate_potential_question(trial_index=None, seed=None):
+def generate_potential_questions(seed=None):
   """This is a function that generates a potential question for the trial.
   The question is generated by adding a random number to the trial index.
 
@@ -71,12 +169,13 @@ def generate_potential_question(trial_index=None, seed=None):
       trial_index (int): Trial index
       seed (int, optional): Seed for the random number generator. Defaults to None.
   """
-  if trial_index is not None and seed is not None:
-    random.seed(seed + trial_index)
+  if  seed is not None:
+    random.seed(seed)
   potential_questions = ["Bylo v odpovědi vlastní jméno?", "Říkal odpověď muž?",
                         "Říkal odpověď žena?", "Byla odpověď v minulém čase?",
                         "Byla odpověď v přítomném čase?"]
-  return random.choice(potential_questions)
+  potential_questions = potential_questions * 7
+  return random.shuffle(potential_questions)
 
 
 def generate_question_trials(seed=None):
