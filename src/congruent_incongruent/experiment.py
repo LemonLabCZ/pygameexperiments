@@ -1,5 +1,6 @@
 import pygame
 import os
+import pandas as pd
 
 
 def initialize_pygame():
@@ -9,10 +10,8 @@ def initialize_pygame():
 
 
 def show_text(screen, text, font_size, color, x, y):
-    # check if screen is initialized
     if screen is None:
         raise ValueError("Screen is not initialized")
-    # get center of the screen
     center = screen.get_rect().center
     font = pygame.font.Font("freesansbold.ttf", font_size)
     text = font.render(text, True, color)
@@ -20,13 +19,13 @@ def show_text(screen, text, font_size, color, x, y):
     pygame.display.update()
 
 
-def path_to_stimulus(part, type, id):
+def path_to_stimulus(part, stimulus, type):
     """
     Filename is in a stimuli/congturent_incongruent folder named
     <part>_<id>_<type>.wav where id is id with 0 padding on the left to 2 digits, part is 
     either q for question or a for answer, and type is either initial or final
     """
-    return os.path.join(os.getcwd(), 'stimuli', 'congruent_incongruent', f'{part}_{str(id).zfill(2)}_{type}.wav')
+    return os.path.join(os.getcwd(), 'stimuli', 'congruent_incongruent', f'{part}_{str(stimulus).zfill(2)}_{type}.wav')
 
 
 def wait_for_answer(screen):
@@ -39,3 +38,21 @@ def wait_for_answer(screen):
                     pygame.quit()
                     exit()
         pygame.time.delay(10)
+
+
+def prepare_question_log():
+    # create a dataframe with the columns: question, answer, time, trial
+    df = pd.DataFrame(columns=['question', 'answer', 'time_start', 
+                               'time_answered', 'trial'])
+    return df
+
+def prepare_trial_log(add_fNIRS = False):
+    list_of_columns = ['trial_start','question_started','question_duration', 'question_ended', 'real_question_duration',
+                        'answer_started', 'answer_duration', 'answer_ended', 'real_answer_duration',
+                        'question_trigger', 'question_cpod_trigger', 'answer_trigger', 'answer_cpod_trigger',
+                        'answer_trigger_2', 'answer_trigger_3']
+    if add_fNIRS:
+        list_of_columns.extend(['trigger_cpod_started', 'trigger_cpod_ended'])
+
+    df_timings = pd.DataFrame(columns=list_of_columns)
+    return df_timings
