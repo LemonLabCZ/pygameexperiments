@@ -78,7 +78,6 @@ def play_trial(iTrial, start_time, df_stimuli, intertrials, should_trigger, path
     return timings
 
 
-
 def get_time_since_start(start_time):
     diff = datetime.now() - start_time
     return diff.total_seconds()

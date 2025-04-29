@@ -1,16 +1,26 @@
 import src.congruent_incongruent.generator as generator
 
 
-def test_generate_intertrial_intervals():
+def test_generate_questions():
+    questions = generator.generate_potential_questions(seed=42)
+    # there should be 35 questions
+    assert len(questions) == 35
+    # each one should appear 7 times
+    assert all(questions.count(q) == 7 for q in set(questions))
+    # five unique questions
+    assert len(set(questions)) == 5
+
+
+def test_generate_aftertrial_intervals():
     min_interval, max_interval = 0.5, 1.5
-    intertrial_intervals = generator.generate_intertrial_intervals(100, min_interval, max_interval)
+    intertrial_intervals = generator.generate_aftertrial_intervals(100, min_interval, max_interval)
     assert len(intertrial_intervals) == 100
     assert all(min_interval <= x <= max_interval for x in intertrial_intervals)
-    
 
-def test_generate_intertrial_intervals_torsten():
+
+def test_generate_aftertrial_intervals_torsten():
     # assert that it has the length of 69
-    intertrial_intervals = generator.generate_intertrial_intervals_torsten()
+    intertrial_intervals = generator.generate_aftertrial_intervals_torsten()
     assert len(intertrial_intervals) == 69
 
 
