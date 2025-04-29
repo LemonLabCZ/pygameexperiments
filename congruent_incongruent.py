@@ -19,6 +19,7 @@ TRIGGERBOX_COM = 'COM3' # COM port of the trigger box, need to check it before t
 DEBUG=False
 EEG_TRIGGER = True # True if you want to send triggers to the EEG
 fNIRS_TRIGGER = True # True if you want to send triggers to the fNIRS
+TRIGGER_DURATION = 0.1 # Duration of the trigger in seconds
 
 MAX_STIMULUS_ANSWER_INTERVAL = 0.5
 MIN_STIMULUS_ANSWER_INTERVAL = 0.4
@@ -79,68 +80,78 @@ stimulus_answer_intervals = generator.generate_stimulus_answer_intervals(N_TRIAL
 
 
 
-def play_trial(iTrial, df_stimuli, intertrials, should_trigger, com, recalculate_inter_trial = False):
+def play_trial(iTrial, stimulus, question_type, answer_type, inter_trial,
+               should_trigger, com, question_trigger, answer_triggers, answer_trigger_delay):
     """_summary_
     Args:
-        iTrial (int): Trial index, starting from 0
-        df_stimuli (pd.DataFrame): Dataframe with all the stimui
-        should_trigger (bool): If the triggers should be sent
-        com (string): COM port of the trigger box
-        recalculate_inter_trial (bool, optional): The trigger box generally adds 17 ms to the trigger 
-        duration. If this is set to true, the intertrial time will be recalculated to match the 
-        total time of the trial and the intertrial time. Defaults to False.
+        answer_triggers (list): List of 3 triggers for the answer
+        answer_trigger_delay (list): List of 2 delays for the answer triggers. First trigger happens immediately
+            the second and the third after given time
 
     Returns:
         list: returns list with timings of the trial
     """
     timings = dict()
-    inter_trial = intertrials[iTrial]
     timings['trial_start'] = flow.get_time_since_start(start_time)
     
-    df_trial = df_stimuli.iloc[iTrial]
-    stim = df_trial['stimulus']
-    # sound_path = experiment.path_to_stimulus(stim)
-    trigger = int(df_trial['trigger'])
-    
-    print(f'{flow.get_time_since_start(start_time)}: Trial {iTrial}. {df_trial["block_type"]}. {df_trial["condition"]}. Stimulus {stim}. Trigger: {df_trial["trigger"]}')
+    question_sound = experiment.path_to_stimulus('q', stimulus, question_type)
+    answer_sound = experiment.path_to_stimulus('a', stimulus, answer_type)
+    print(f'{flow.get_time_since_start(start_time)}: Trial {iTrial}. {question_sound} - {answer_sound}. Trigger: {question_trigger}')
 
-    sound2play = pygame.mixer.Sound(sound_path)
-    timings['sound_duration'] = sound2play.get_length()
-    timings['sound_started'] = flow.get_time_since_start(start_time)
-    sound2play.play(loops = 0)
-    waittime_ms = round(timings['sound_duration']*1000)
-    timings['trigger_started'] = flow.get_time_since_start(start_time)
-    if should_trigger:       
-        timings['trigger_com_started'] = flow.get_time_since_start(start_time)
-        thread = threading.Thread(target=sendTrigger,args=(trigger, com, TRIGGER_DURATION))
-        thread.start()
-        timings['trigger_com_ended'] = flow.get_time_since_start(start_time)
+    question_timings, sound = play_stimulus(question_sound)
+    timings['question_duration'] = question_timings['sound_duration']
+    timings['question_started'] = question_timings['sound_started']
+    if should_trigger:
+        send_trigger(com, question_trigger, TRIGGER_DURATION)
+        timings['question_trigger'] = flow.get_time_since_start(start_time)
     if fNIRS_TRIGGER:           
-        timings['trigger_cpod_started'] = flow.get_time_since_start(start_time)
-        # Sending CPOD trigger takes cca 20ms, execute in a separate thread
-        thread = threading.Thread(target=sendTriggerCPOD,args=(CPOD, trigger, TRIGGER_DURATION*1000))
-        thread.start()
-        timings['trigger_cpod_ended'] = flow.get_time_since_start(start_time)        
-    timings['trigger_ended'] = flow.get_time_since_start(start_time)
-    # Substracts the extraduration of the trigger from the intertrial time (generally 17 ms for the trigger box)
-    if recalculate_inter_trial:
-        ms_trigger_delay = round((timings['trigger_ended'] - timings['trigger_started'])*1000)
-        pygame.time.delay(waittime_ms + inter_trial - ms_trigger_delay)
-    else:
-        pygame.time.delay(waittime_ms + inter_trial)
-    
-    sound2play.stop()
-    timings['sound_ended'] = flow.get_time_since_start(start_time)
-    timings['real_sound_duration'] = timings['sound_ended'] - timings['sound_started']
-    timings['sound_duration_difference'] = timings['real_sound_duration'] - timings['sound_duration']
-    timings['real_trial_duration'] = timings['sound_ended'] - timings['trial_start']
+        send_cpod_trigger(CPOD, question_trigger, TRIGGER_DURATION)
+        timings['question_cpod_trigger'] = flow.get_time_since_start(start_time)
+    pygame.time.delay(round(timings['question_duration']*1000) + inter_trial)
+    sound.stop()
+    timings['question_ended'] = flow.get_time_since_start(start_time)
+
+    answer_timings, sound = play_stimulus(answer_sound)
+    if should_trigger:
+        timings['answer_trigger'] = flow.get_time_since_start(start_time)
+        timings['answer_trigger_2'] = timings['answer_trigger'] + answer_trigger_delay[0]
+        timings['answer_trigger_3'] = timings['answer_trigger'] + answer_trigger_delay[1]
+        send_trigger(com, answer_triggers[0], TRIGGER_DURATION)
+        send_trigger(com, answer_triggers[1], TRIGGER_DURATION, delay=answer_trigger_delay[0])
+        send_trigger(com, answer_triggers[2], TRIGGER_DURATION, delay=answer_trigger_delay[1])
+    if fNIRS_TRIGGER:
+        send_cpod_trigger(CPOD, answer_triggers[0], TRIGGER_DURATION)
+        timings['answer_cpod_trigger'] = flow.get_time_since_start(start_time)
+    pygame.time.delay(answer_timings['sound_duration']*1000)
+    sound.stop()
     return timings
 
-def question_phase(screen, iTrial, df_stimul):
+
+def play_stimulus(stimulus):
+    timings = dict()
+    sound2play = pygame.mixer.Sound(stimulus)
+    timings['sound_started'] = flow.get_time_since_start(start_time)
+    timings['sound_duration'] = stimulus.get_length()
+    sound2play.play(loops = 0)
+    return timings, sound2play
+
+
+def send_trigger(com, trigger, duration):
+    if com is None:
+        raise ValueError("COM port is not specified")
+    thread = threading.Thread(target=sendTrigger, args=(trigger, com, duration))
+    thread.start()
+
+def send_cpod_trigger(cpod, trigger, duration):
+    if cpod is None:
+        raise ValueError("CPOD is not specified")
+    thread = threading.Thread(target=sendTriggerCPOD,args=(cpod, trigger, duration))
+    thread.start()
+
+def question_phase(screen, question):
     # wait for the answer listening for either A or N (A for yes, N for no)
     pygame.mouse.set_visible(False)
     screen.fill((0, 0, 0))
-    question = generator.generate_potential_question(iTrial)
     experiment.show_text(screen, question, 50, (255, 255, 255), *getScreenSize())
     pygame.display.update()
     answer = experiment.wait_for_answer(screen)
@@ -153,28 +164,68 @@ def question_phase(screen, iTrial, df_stimul):
     # save the answer to the dataframe
     return answer
 
+def pause_phase(screen):
+    # wait for the answer listening for either A or N (A for yes, N for no)
+    pygame.mouse.set_visible(False)
+    screen.fill((0, 0, 0))
+    experiment.show_text(screen, "Pause", 50, (255, 255, 255), *getScreenSize())
+    pygame.display.update()
+    # wait for 5 miuntes
+    pygame.time.delay(5*60*1000)
+    return
+
 # Experiment flow =======================================================
 start_time = datetime.now()
 last_datetime = start_time
-intertrials = generator.generate_intertrial_intervals_torsten(seed=None)
-df_stimuli = generator.generate_stimulus_answer_pairs(seed=None)
-question_trials = generator.generate_question_trials(seed=None)
+# This actually should be the same just in case the randomization will not work
+PARTICIPANT_ID = 99
+RANDOM_SEED = 42
+intertrials = generator.generate_intertrial_intervals_torsten(seed=RANDOM_SEED)
+df_stimuli = generator.generate_stimulus_answer_pairs(seed=PARTICIPANT_ID)
+question_trials = generator.generate_question_trials(seed=PARTICIPANT_ID)
+questions = generator.generate_potential_questions(seed=PARTICIPANT_ID)
+iTrial = 0
+iQuestionTrial = 0
+question, answer = df_stimuli.loc[iTrial, ['question', 'answer']]
+question, answer
+
+log_timestamp = start_time.strftime("%Y%m%d-%H%M%S")
 log_filename = os.path.join(os.getcwd(), 'logs', 'standard_nonstandard',
-                        f'{PARTICIPANT_ID}_{start_time.strftime("%Y%m%d-%H%M%S")}_settings.csv')
+                        f'{PARTICIPANT_ID}_{log_timestamp}_settings.csv')
+settings_filename = os.path.join(os.getcwd(), 'logs', 'standard_nonstandard',
+                        f'{PARTICIPANT_ID}_{log_timestamp}_settings.csv')
+questions_log_filename = os.path.join(os.getcwd(), 'logs', 'standard_nonstandard',  
+                        f'{PARTICIPANT_ID}_{log_timestamp}_questions.csv')
+
 # Experimental loop -----------------------
+screen = experiment.initialize_pygame()
+
 try:
-    df_timings = flow.prepare_log_table(add_fNIRS=fNIRS_TRIGGER) #$ FIX THIS
+    df_timings = experiment.prepare_trial_log(add_fNIRS=fNIRS_TRIGGER) #$ FIX THIS
+    df_questions = experiment.prepare_question_log()
     df_timings.to_csv(log_filename, index=False, header=True, mode='w')
     for iTrial in range(0, df_stimuli.shape[0]):
-        timings = play_trial(iTrial, df_stimuli, intertrials, EEG_TRIGGER, COMPORT, RECALCULATE_INTER_TRIAL)
+        stimulus_question, stimulus_answer = df_stimuli.loc[iTrial, ['question', 'answer']]
+        timings = play_trial(iTrial, df_stimuli, intertrials, EEG_TRIGGER, COMPORT)
         df_timings = df_timings._append(timings, ignore_index = True)
+        # BEHAVIORAL QUESTION ========================================
         if iTrial in question_trials:
-            answer = question_phase(screen, iTrial, df_stimuli)
-            df_timings.at[iTrial, 'answer'] = answer
+            question_time_start = flow.get_time_since_start(start_time)
+            question = questions[iQuestionTrial]
+            iQuestionTrial += 1
+            answer = question_phase(screen, iTrial, question)
+            df_questions = df_questions.append({'question': question, 'answer': answer, 
+                                    'time_start': question_time_start,
+                                    'time_answered': flow.get_time_since_start(start_time), 
+                                    'trial': iTrial}, ignore_index = True)
+            df_questions.to_csv(questions_log_filename, index=False, header=True, mode='w')
+        # PAUSE AFTER 70 TRIALS ========================================
+        if iTrial == 69:
             df_timings.to_csv(log_filename, index=False, header=True, mode='w')
+            pause_phase()
 finally:
     df_timings.to_csv(log_filename, index=False, header=True, mode='w')
-    df_stimuli.to_csv(f'logs/standard_nonstandard/{PARTICIPANT_ID}_{timestamp}_settings.csv', index=False, header=True, mode='w')    
+    df_stimuli.to_csv(settings_filename, index=False, header=True, mode='w')
 print("Experiment has ended.")
 pygame.display.quit()
 pygame.quit()
