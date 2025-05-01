@@ -40,19 +40,16 @@ def sendTrigger(decTriggerVal, com_port, duration = 0.01, threadTimeout = 1, del
             if port.inWaiting() > 0:
                 print ("0x%X"%ord(port.read(1)))
 
+    if delay is not None and delay > 0:
+        time.sleep(delay)
     port = serial.Serial(com_port, baudrate=2000000)
     thread = threading.Thread(target=ReadThread, args=(port,))
     thread.start()
-    if delay is not None and delay > 0:
-        time.sleep(delay)
     port.write([hexTriggerVal])
     time.sleep(duration)
     port.write([0x00])
-    # Reset the port to its default state
-    # Terminate the read thread
     Connected = False
     thread.join(threadTimeout)
-    # Close the serial port
     port.close()
 
 ## Eyetracker

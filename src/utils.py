@@ -28,3 +28,5 @@ def get_screen_size(screen: pygame.Surface):
     if screen is None:
         raise ValueError("Screen is not initialized")
     return (screen.get_width(), screen.get_height())
+
+
