@@ -2,6 +2,8 @@ import pygame
 import os
 import pandas as pd
 from src import utils
+import time
+from moviepy import VideoFileClip
 
 def initialize_pygame():
     pygame.init()
@@ -73,11 +75,20 @@ def question_phase(screen, question):
     return answer
 
 
+def video_phase(screen, video):
+    play_video(screen, video)
+
+
 def pause_phase(screen, duration):
     screen.fill((0, 0, 0))
-    utils.show_text(screen, "Pause", 50, (255, 255, 255))
+    utils.show_text(screen, "Pauza", 50, (255, 255, 255))
     pause_start = pygame.time.get_ticks()
     while True:
+        ## every second update text showing remaining time
+        remaining_time = duration - (pygame.time.get_ticks() - pause_start) // 1000
+        if remaining_time > 0 and remaining_time < (duration - 5):
+            screen.fill((0, 0, 0))
+            utils.show_text(screen, f"{remaining_time}", 50, (255, 255, 255))
         pygame.display.update()
         for event in pygame.event.get():
             if event.type == pygame.KEYDOWN:
@@ -94,3 +105,49 @@ def show_fixation_cross(screen):
     screen = utils.show_text(screen, "+", 50, (255, 255, 255))
     pygame.display.update()
     return
+
+
+def play_video(screen, video_path):
+    clock = pygame.time.Clock()
+    clip = VideoFileClip(video_path)
+
+    # Resize the video to fit the screen
+    video_width, video_height = clip.size
+    screen_width, screen_height = screen.get_size()
+    scale_w = screen_width / video_width
+    scale_h = screen_height / video_height
+    scale_factor = min(scale_w, scale_h) # Use the smaller scale factor to fit entirely
+    clip = clip.resized(scale_factor)
+    scaled_video_width = int(video_width * scale_factor)
+    scaled_video_height = int(video_height * scale_factor)
+
+    # Calculate the new dimensions of the scaled video
+    scaled_video_width = int(video_width * scale_factor)
+    scaled_video_height = int(video_height * scale_factor)
+
+    # Calculate the top-left position to center the scaled video on the fullscreen
+    blit_x = (screen_width - scaled_video_width) // 2
+    blit_y = (screen_height - scaled_video_height) // 2
+        
+    start_time = time.time()
+    frame_count = 0
+
+    # Play the video frame by frame
+    for frame in clip.iter_frames(fps=60, dtype="uint8"):
+        # Convert the frame (numpy array) to a Pygame surface
+        frame_surface = pygame.surfarray.make_surface(frame.swapaxes(0, 1))
+        scaled_frame = pygame.transform.smoothscale(frame_surface, (scaled_video_width, scaled_video_height)) # Use smoothscale for better quality
+        # Blit the frame onto the screen
+        screen.blit(scaled_frame, (blit_x, blit_y))
+        pygame.display.flip()
+        clock.tick(clip.fps)
+        for event in pygame.event.get():
+            if event.type == pygame.KEYDOWN:
+                pygame.quit()
+                exit()
+
+    end_time = time.time()
+    actual_duration = end_time - start_time
+    actual_fps = frame_count / actual_duration if actual_duration > 0 else 0
+    print(f"Pause video finished. Actual duration: {actual_duration:.2f}s, Actual avg FPS: {actual_fps:.2f}")
+    clip.close()
