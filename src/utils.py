@@ -2,6 +2,13 @@ import pygame
 import tkinter as tk
 from tkinter import simpledialog
 
+def getScreenSize(): 
+    sid = '' 
+    ROOT = tk.Tk() 
+    ROOT.withdraw() 
+    return (ROOT.winfo_screenwidth(),ROOT.winfo_screenheight())
+
+
 def initScreen(screenSize, screenColor):
     # input variables:
     # screenSize: screen size tuple: (width, height)
