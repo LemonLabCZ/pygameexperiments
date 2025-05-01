@@ -1,22 +1,13 @@
 import pygame
 import os
 import pandas as pd
-
+from src import utils
 
 def initialize_pygame():
     pygame.init()
+    pygame.mouse.set_visible(False)
     screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
     return screen
-
-
-def show_text(screen, text, font_size, color, x, y):
-    if screen is None:
-        raise ValueError("Screen is not initialized")
-    center = screen.get_rect().center
-    font = pygame.font.Font("freesansbold.ttf", font_size)
-    text = font.render(text, True, color)
-    screen.blit(text, (center[0] - text.get_width()/2, center[1] - text.get_height()/2))
-    pygame.display.update()
 
 
 def path_to_stimulus(part, stimulus, type):
@@ -30,6 +21,7 @@ def path_to_stimulus(part, stimulus, type):
 
 def wait_for_answer(screen):
     while True:
+        pygame.display.update()
         for event in pygame.event.get():
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_a or event.key == pygame.K_n:
@@ -39,12 +31,14 @@ def wait_for_answer(screen):
                     exit()
         pygame.time.delay(10)
 
+# LOG PREPARATION ===================================
 
 def prepare_question_log():
     # create a dataframe with the columns: question, answer, time, trial
     df = pd.DataFrame(columns=['question', 'answer', 'time_start', 
                                'time_answered', 'trial'])
     return df
+
 
 def prepare_trial_log(add_fNIRS = False):
     list_of_columns = ['trial_start','question_started','question_duration', 'question_ended', 'real_question_duration',
@@ -56,3 +50,47 @@ def prepare_trial_log(add_fNIRS = False):
 
     df_timings = pd.DataFrame(columns=list_of_columns)
     return df_timings
+
+
+# INDIVIDUAL PHASES -------------------------------
+
+def question_phase(screen, question):
+    # wait for the answer listening for either A or N (A for yes, N for no)
+    screen.fill((0, 0, 0))
+    # Add "Stiskněte A pro Ano a N pro Ne" to the question
+    question = question + " - Stiskněte A pro Ano a N pro Ne"
+    
+    utils.show_text(screen, question, 50, (255, 255, 255))
+    pygame.display.update()
+
+    answer = wait_for_answer(screen)
+    if answer == pygame.K_a:
+        answer = 'yes'
+    elif answer == pygame.K_n:
+        answer = 'no'
+    else:
+        answer = 'unknown'
+    return answer
+
+
+def pause_phase(screen, duration):
+    screen.fill((0, 0, 0))
+    utils.show_text(screen, "Pause", 50, (255, 255, 255))
+    pause_start = pygame.time.get_ticks()
+    while True:
+        pygame.display.update()
+        for event in pygame.event.get():
+            if event.type == pygame.KEYDOWN:
+                pygame.quit()
+                exit()
+        pygame.time.delay(10)
+        if pygame.time.get_ticks() - pause_start >= duration * 1000:
+            break
+    return
+
+
+def show_fixation_cross(screen):
+    screen.fill((0, 0, 0))
+    screen = utils.show_text(screen, "+", 50, (255, 255, 255))
+    pygame.display.update()
+    return
