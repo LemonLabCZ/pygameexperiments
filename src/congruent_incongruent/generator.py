@@ -130,8 +130,8 @@ def generate_aftertrial_intervals_torsten(seed=None):
       seed (int, optional): Seed for the random number generator. Defaults to None.
   """
   rng = np.random.default_rng(seed)
-  intertrials = [2] * 37 + [4] * 19 + [8] * 10 + [16] * 3
-  intertrials = rng.choice(intertrials, 69, replace=False).tolist()
+  intertrials = [2] * 74+ [4] * 37 + [8] * 19 + [16] * 10
+  intertrials = rng.choice(intertrials, 140, replace=False).tolist()
   return intertrials
 
 
