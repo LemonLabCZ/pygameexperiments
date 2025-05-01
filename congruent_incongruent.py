@@ -22,7 +22,7 @@ fNIRS_TRIGGER = True # True if you want to send triggers to the fNIRS
 TRIGGER_DURATION = 0.1 # Duration of the trigger in seconds
 PAUSE_TRIAL = 3 # Trial number when the pause happens
 PAUSE_DURATION = 300 # Duration of the pause in seconds
-PAUSE_MOVIE = ""
+PAUSE_MOVIE = "stimulli/congruent_incongruent/DONKS_experiemnt-small.mp4" # Path to the movie for the pause
 DEBUG_MESSAGES = False # True if you want to see debug messages
 
 MAX_STIMULUS_ANSWER_INTERVAL = 0.5

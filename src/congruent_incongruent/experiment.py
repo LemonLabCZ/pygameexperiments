@@ -41,8 +41,8 @@ def prepare_question_log():
 
 
 def prepare_trial_log(add_fNIRS = False):
-    list_of_columns = ['trial_start','question_started','question_duration', 'question_ended', 'real_question_duration',
-                        'answer_started', 'answer_duration', 'answer_ended', 'real_answer_duration',
+    list_of_columns = ['trial_start','question_started','question_duration', 'question_ended', 
+                        'answer_started', 'answer_duration', 'answer_ended',
                         'question_trigger', 'question_cpod_trigger', 'answer_trigger', 'answer_cpod_trigger',
                         'answer_trigger_2', 'answer_trigger_3']
     if add_fNIRS:
