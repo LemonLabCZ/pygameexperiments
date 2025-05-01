@@ -11,21 +11,20 @@ def test_generate_questions():
     assert len(set(questions)) == 5
 
 
-def test_generate_aftertrial_intervals():
-    min_interval, max_interval = 0.5, 1.5
-    intertrial_intervals = generator.generate_aftertrial_intervals(100, min_interval, max_interval)
-    assert len(intertrial_intervals) == 100
-    assert all(min_interval <= x <= max_interval for x in intertrial_intervals)
-
-
 def test_generate_aftertrial_intervals_torsten():
     # assert that it has the length of 69
-    intertrial_intervals = generator.generate_aftertrial_intervals_torsten()
+    intertrial_intervals = generator.generate_aftertrial_intervals_torsten(seed=42)
+    # assert that with the same seed the same intervals are generated
+    intertrial_intervals_2 = generator.generate_aftertrial_intervals_torsten(seed=42)
+    assert intertrial_intervals == intertrial_intervals_2
     assert len(intertrial_intervals) == 69
 
 
 def test_generate_question_trials():
-    question_trials = generator.generate_question_trials()
+    question_trials = generator.generate_question_trials(seed=42)
+    question_trials_2 = generator.generate_question_trials(seed=42)
+    # assert that with the same seed the same intervals are generated
+    assert (question_trials == question_trials_2).all()
     # assert that the max is 140
     assert question_trials.max() == 140
     # assert that the min is larger than 0
@@ -61,4 +60,3 @@ def test_generate_stimulus_ansewr_pairs():
     assert stimulus_answer_intervals['stimulus_question_answer'].is_unique
     # assert that no two consecutive rows have the same stimulus (first is always Nan
     assert all(stimulus_answer_intervals['stimulus'].diff().abs()[1:] > 0)
-

@@ -122,32 +122,6 @@ def shuffle_with_constraints_greedy(df: pd.DataFrame, max_restarts: int = 10) ->
     return None
 
 
-def generate_aftertrial_intervals(n_trials, min_intertrial_interval, 
-                                  max_intertrial_interval, seed=None):
-  """This is a function that generates a list of intertrial intervals.
-  The interprials should follow an exponential distribution between min and max in seconds.
-
-  Args:
-      n_trials (int): Number of trials
-      min_intertrial_interval (float): Minimum intertrial interval in seconds
-      max_intertrial_interval (float): Maximum intertrial interval in seconds
-      seed (int, optional): Seed for the random number generator. Defaults to None.
-  """
-  intertrial_intervals = []
-
-  if seed is not None:
-    random.seed(seed)
-
-  possible_intervals = np.linspace(min_intertrial_interval, max_intertrial_interval, 50)
-  weights = np.exp(-possible_intervals / min_intertrial_interval)
-  weights /= weights.sum()
-
-  for i in range(n_trials):
-    intertrial_intervals.append(np.random.choice(possible_intervals, p=weights))
-
-  return intertrial_intervals
-
-
 def generate_aftertrial_intervals_torsten(seed=None):
   """This is a function that generates a list of intertrial intervals.
   The interprials should follow an exponential distribution between min and max in seconds.
@@ -155,18 +129,17 @@ def generate_aftertrial_intervals_torsten(seed=None):
   Args:
       seed (int, optional): Seed for the random number generator. Defaults to None.
   """
-  if seed is not None:
-    random.seed(seed)
+  rng = np.random.default_rng(seed)
   intertrials = [2] * 37 + [4] * 19 + [8] * 10 + [16] * 3
-  return np.random.choice(intertrials, 69, replace=False).tolist()
+  intertrials = rng.choice(intertrials, 69, replace=False).tolist()
+  return intertrials
 
 
 def generate_intertrial_intervals(n_trials, min_s, max_s, seed=None):
   """ Generate times between min adn max (in seconds), uniform distribution
   """
-  if seed is not None:
-    random.seed(seed)
-  intertrial_intervals = np.random.uniform(min_s, max_s, n_trials)
+  rng = np.random.default_rng(seed)
+  intertrial_intervals = rng.uniform(min_s, max_s, n_trials)
   return intertrial_intervals.tolist()
 
 
@@ -178,15 +151,15 @@ def generate_potential_questions(seed=None):
       trial_index (int): Trial index
       seed (int, optional): Seed for the random number generator. Defaults to None.
   """
-  if  seed is not None:
-    random.seed(seed)
+  rng = np.random.default_rng(seed)
   potential_questions = ["Bylo v odpovědi vlastní jméno?", 
                          "Říkal odpověď muž?",
                          "Říkal odpověď žena?", 
                          "Byla odpověď v minulém čase?",
                          "Byla odpověď v přítomném čase?"]
   potential_questions = potential_questions * 7
-  return random.sample(potential_questions, len(potential_questions))
+  rng.shuffle(potential_questions)
+  return potential_questions
 
 
 def generate_question_trials(seed=None):
@@ -197,10 +170,9 @@ def generate_question_trials(seed=None):
       n_trials (int): Number of trials
       seed (int, optional): Seed for the random number generator. Defaults to None.
   """
-  if seed is not None:
-    random.seed(seed)
+  rng = np.random.default_rng(seed)
   question_trials = [2] * 5 + [3] * 8 + [4] * 9 + [5] * 8 + [6] * 5
-  random.shuffle(question_trials)
+  rng.shuffle(question_trials)
   question_trials = np.cumsum(question_trials)
   return question_trials
   
