@@ -20,13 +20,14 @@ DEBUG=True
 EEG_TRIGGER = True # True if you want to send triggers to the EEG
 fNIRS_TRIGGER = True # True if you want to send triggers to the fNIRS
 TRIGGER_DURATION = 0.1 # Duration of the trigger in seconds
+PAUSE_TRIAL = 69 # Trial number when the pause happens
+DEBUG_MESSAGES = False # True if you want to see debug messages
 
 MAX_STIMULUS_ANSWER_INTERVAL = 0.5
 MIN_STIMULUS_ANSWER_INTERVAL = 0.4
 
 N_TRIALS = 140
 RANDOM_SEED = 42 # DO NOT CHANGE THIS WHEN RUNNING THE EXPERIMENT
-
 
 # SETUP DO NOT TOUCH BELOW THIS POINT :) 
 # ====================================================
@@ -49,6 +50,7 @@ import src.congruent_incongruent.generator as generator
 ## Setup Debugging
 if DEBUG:
     EEG_TRIGGER=False
+    DEBUG_MESSAGES=True
     fNIRS_TRIGGER=False
     if PARTICIPANT_ID > 0:
         PARTICIPANT_ID = 0
@@ -141,6 +143,8 @@ def send_trigger(com, trigger, duration):
     """
     if com is None:
         raise ValueError("COM port is not specified")
+    if (DEBUG_MESSAGES):
+        print(f"Sending EEG trigger {trigger} to {com}")
     thread = threading.Thread(target=sendTrigger, args=(trigger, com, duration))
     thread.start()
 
@@ -148,6 +152,8 @@ def send_trigger(com, trigger, duration):
 def send_cpod_trigger(cpod, trigger, duration):
     if cpod is None:
         raise ValueError("CPOD is not specified")
+    if (DEBUG_MESSAGES):
+        print(f"Sending fnirs trigger {trigger} to {cpod}")
     thread = threading.Thread(target=sendTriggerCPOD,args=(cpod, trigger, duration))
     thread.start()
 
@@ -180,6 +186,13 @@ def pause_phase(screen):
     return
 
 
+def show_fixation_cross(screen):
+    screen.fill((0, 0, 0))
+    experiment.show_text(screen, "+", 50, (255, 255, 255), *getScreenSize())
+    pygame.display.update()
+    return
+
+
 # Experiment flow =======================================================
 start_time = datetime.now()
 last_datetime = start_time
@@ -196,6 +209,7 @@ except Exception as e:
 # Check if the stimulus answer pairs are correct
 question_trials = generator.generate_question_trials(seed=PARTICIPANT_ID)
 questions = generator.generate_potential_questions(seed=PARTICIPANT_ID)
+
 
 iQuestionTrial = 0
 log_timestamp = start_time.strftime("%Y%m%d-%H%M%S")
@@ -234,15 +248,16 @@ try:
             question_time_start = flow.get_time_since_start(start_time)
             question = questions[iQuestionTrial]
             iQuestionTrial += 1
-            print(f'Question {iTrial}: {flow.get_time_since_start(start_time)}')
+            print(f'Question {iTrial}: {flow.get_time_since_start(start_time)}, question {question}')
             answer = question_phase(screen, question)
             df_questions = df_questions._append({'question': question, 'answer': answer, 
                                     'time_start': question_time_start,
                                     'time_answered': flow.get_time_since_start(start_time), 
                                     'trial': iTrial}, ignore_index = True)
             df_questions.to_csv(questions_log_filename, index=False, header=True, mode='w')
+            df_timings.to_csv(log_filename, index=False, header=True, mode='w')
         # PAUSE AFTER 70 TRIALS =======================================
-        if iTrial == 69:
+        if iTrial == PAUSE_TRIAL:
             df_timings.to_csv(log_filename, index=False, header=True, mode='w')
             pause_phase(screen)
 finally:
