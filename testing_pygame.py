@@ -1,5 +1,7 @@
 import pygame
 import sys
+import src.utils as utils
+
 pygame.init()
 
 screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
@@ -21,19 +23,18 @@ def check_events():
 def game_quit():
     sys.exit()
 
+
 def update():
     check_for_key_press()
+
 
 def check_for_key_press():
     if pygame.key.get_pressed()[pygame.K_SPACE]:
         pygame.event.post(pygame.event.Event(pygame.QUIT))
 
+
 def draw():
-    # write a text in the middle of the screen
-    font = pygame.font.Font("freesansbold.ttf", 40)
-    text = font.render("Press space to quit", True, (255, 255, 255))
-    screen.blit(text, (screen.get_width()/2 - text.get_width()/2, screen.get_height()/2 - text.get_height()/2))
-    pygame.display.update()
+    utils.show_text(screen, "Press SPACE to quit", 50, (255, 255, 255))
 
 game_loop()
 
